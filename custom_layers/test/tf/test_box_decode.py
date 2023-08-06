@@ -28,14 +28,15 @@ import pytest
 
 
 class TestBoxDecode:
-    @pytest.mark.parametrize('clip_size',  [(100, 200), None])
-    def test_load_custom(self, tmp_path, clip_size):
+
+    @pytest.mark.parametrize('img_size', [(100, 200), None])
+    def test_load_custom(self, tmp_path, img_size):
         from custom_layers.tf import custom_objects
         shape = (10, 4)
         path = tmp_path / 'model.h5'
         anchors = np.random.uniform(size=shape).astype(np.float32)
         scale_factors = (1, 2.5, 3., 4)
-        self._build_box_decode(anchors, scale_factors, clip_size, path)
+        self._build_box_decode(anchors, scale_factors, img_size, path)
         with pytest.raises(ValueError, match='Unknown layer.*BoxDecode'):
             tf.keras.models.load_model(path)
 
@@ -44,10 +45,10 @@ class TestBoxDecode:
         cfg = model.layers[-1].get_config()
         assert np.array_equal(cfg['anchors'], anchors)
         assert tuple(cfg['scale_factors']) == scale_factors
-        if clip_size:
-            assert tuple(cfg['clip_size']) == clip_size
+        if img_size:
+            assert tuple(cfg['img_size']) == img_size
         else:
-            assert cfg['clip_size'] is None
+            assert cfg['img_size'] is None
         # is inferable
         model(np.random.uniform(size=(1, *shape)).astype(np.float32))
 
@@ -64,7 +65,7 @@ class TestBoxDecode:
         anchors = self._generate_random_anchors(n_boxes, img_size=(100, 200), seed=1)
 
         v0, v1, v2, v3 = .5, 1., .2, 1.2
-        offsets = np.empty((2, n_boxes, 4)).astype(np.float32)
+        offsets = np.empty((2, n_boxes, 4), dtype=np.float32)
         # we define encoded offsets that will yield boxes such that:
         # np.log(boxes_h / anchors_h) = v2
         # np.log(boxes_w / anchors_w) = v3
@@ -95,24 +96,34 @@ class TestBoxDecode:
         anchors = self._generate_random_anchors(n_anchors=n_boxes, seed=1)
         mul = 0.01 if normalize else 1
         # (2, n_boxes, 4)
-        boxes = mul * np.array([[[-5, 5, 1, 12],          # clip y_min
-                               [85, -4, 90, 2],           # clip x_min
-                               [85, 95, 95, 100]],        # clip y_max
-                              [[0, 85, 2, 115],           # clip x_max
-                               [-10, 115, -5, 120],       # y_min, y_max < 0, x_min, x_max > x_size
-                               [95, -10, 100, -5]]        # y_min, y_max > y_size, x_min, x_max < 0
-                              ]).astype(np.float32)
+        boxes = mul * np.array([
+            [
+                [-5, 5, 1, 12],    # clip y_min
+                [85, -4, 90, 2],    # clip x_min
+                [85, 95, 95, 100]
+            ],    # clip y_max
+            [
+                [0, 85, 2, 115],    # clip x_max
+                [-10, 115, -5, 120],    # y_min, y_max < 0, x_min, x_max > x_size
+                [95, -10, 100, -5]
+            ]    # y_min, y_max > y_size, x_min, x_max < 0
+        ]).astype(np.float32)
 
         rel_codes = self._encode_offsets(boxes, anchors, scale_factors=scale_factors)
         model = self._build_box_decode(anchors, scale_factors=scale_factors, img_size=img_size)
         out = model(rel_codes)
-        exp_boxes = mul * np.array([[[0, 5, 1, 12],       # clip y_min
-                                   [85, 0, 90, 2],        # clip x_min
-                                   [85, 95, 90, 100]],    # clip y_max
-                                  [[0, 85, 2, 110],       # clip x_max
-                                   [0, 110, 0, 110],      # y_min, y_max < 0, x_min, x_max > x_size
-                                   [90, 0, 90, 0]]        # y_min, y_max > y_size, x_min, x_max < 0
-                                  ]).astype(np.float32)
+        exp_boxes = mul * np.array([
+            [
+                [0, 5, 1, 12],    # clip y_min
+                [85, 0, 90, 2],    # clip x_min
+                [85, 95, 90, 100]
+            ],    # clip y_max
+            [
+                [0, 85, 2, 110],    # clip x_max
+                [0, 110, 0, 110],    # y_min, y_max < 0, x_min, x_max > x_size
+                [90, 0, 90, 0]
+            ]    # y_min, y_max > y_size, x_min, x_max < 0
+        ]).astype(np.float32)
         assert np.allclose(out, exp_boxes)
 
     @staticmethod
@@ -125,10 +136,10 @@ class TestBoxDecode:
         return boxes.astype(np.float32)
 
     @classmethod
-    def _generate_random_anchors(cls, n_anchors, img_size: tuple = None, seed=None):
+    def _generate_random_anchors(cls, n_anchors, img_size=None, seed=None):
         anchors = cls._generate_random_boxes(1, n_anchors, seed)[0]
         if img_size:
-            anchors = anchors * np.array(img_size+img_size, dtype=np.float32)
+            anchors = anchors * np.array(img_size + img_size, dtype=np.float32)
         return anchors
 
     @staticmethod
@@ -138,14 +149,14 @@ class TestBoxDecode:
         boxes_center = boxes[..., :2] + boxes_hw / 2
         anchors_center = anchors[..., :2] + anchors_hw / 2
         thw = np.log(boxes_hw / anchors_hw)
-        tyx = (boxes_center - anchors_center)/anchors_hw
+        tyx = (boxes_center - anchors_center) / anchors_hw
         t = np.concatenate([tyx, thw], axis=-1)
         return t * np.asarray(scale_factors)
 
     @staticmethod
     def _build_box_decode(anchors, scale_factors, img_size, path=None):
         from custom_layers.tf.box_decode import BoxDecode
-        box_decode = BoxDecode(anchors=anchors, scale_factors=scale_factors, clip_size=img_size)
+        box_decode = BoxDecode(anchors=anchors, scale_factors=scale_factors, img_size=img_size)
         x = tf.keras.layers.Input(anchors.shape)
         model = tf.keras.Model(x, box_decode(x))
         if path:

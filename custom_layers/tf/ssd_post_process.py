@@ -21,7 +21,7 @@ Created on 7/30/23
 
 @author: irenab
 """
-from typing import Sequence, Any
+from typing import Sequence
 
 import tensorflow as tf
 import numpy as np
@@ -96,7 +96,7 @@ class SSDPostProcess(tf.keras.layers.Layer):
                                                         clip_boxes=False)
         return outputs
 
-    def get_config(self):
+    def get_config(self) -> dict:
         return {
             'anchors': self.box_decode.anchors.numpy(),
             'scale_factors': self.box_decode.scale_factors,

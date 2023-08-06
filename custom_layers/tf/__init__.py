@@ -22,7 +22,7 @@ Created on 7/9/23
 @author: irenab
 """
 from .box_decode import BoxDecode
-from .ssd_post_process import SSDPostProcess
 from .score_converter import ScoreConverter
+from .ssd_post_process import SSDPostProcess
 
 from .custom_objects import custom_objects

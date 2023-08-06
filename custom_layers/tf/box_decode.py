@@ -21,8 +21,10 @@ Created on 6/8/23
 
 @author: irenab
 """
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Any
+
 import tensorflow as tf
+import numpy as np
 
 from custom_layers.tf.box_utils import corners_to_centroids, centroids_to_corners
 from custom_layers.tf.custom_objects import register_layer
@@ -30,19 +32,16 @@ from custom_layers.tf.custom_objects import register_layer
 
 @register_layer
 class BoxDecode(tf.keras.layers.Layer):
-    def __init__(self,
-                 anchors,
-                 scale_factors: Sequence[float],
-                 clip_size: Optional[Sequence[float]],
-                 **kwargs):
 
+    def __init__(self, anchors: np.ndarray, scale_factors: Sequence[float], img_size: Optional[Sequence[float]],
+                 **kwargs: Any):
         """
         Box decoding per Faster R-CNN, with clipping to image size.
 
         Args:
             anchors: anchors of shape (n_boxes, 4) in corners coordinates (y_min, x_min, y_max, x_max)
             scale_factors: scaling factors in format (y, x, height, width)
-            clip_size: image size for clipping in format (height, width). Decoded boxes coordinates will be clipped
+            img_size: image size for clipping in format (height, width). Decoded boxes coordinates will be clipped
                        into the range y=[0, height], x=[0, width].
                        If None, clipping is skipped.
 
@@ -52,7 +51,7 @@ class BoxDecode(tf.keras.layers.Layer):
         """
         super().__init__(**kwargs)
         anchors = tf.constant(anchors)
-        if not(len(anchors.shape) == 2 and anchors.shape[-1] == 4):
+        if not (len(anchors.shape) == 2 and anchors.shape[-1] == 4):
             raise ValueError(f'Invalid anchors shape {anchors.shape}. Expected shape (n_boxes, 4).')
         self.anchors = anchors
 
@@ -60,11 +59,11 @@ class BoxDecode(tf.keras.layers.Layer):
             raise ValueError(f'Invalid scale factors {scale_factors}. Expected 4 values for (y, x, height, width).')
         self.scale_factors = scale_factors
 
-        if clip_size and len(clip_size) != 2:
-            raise ValueError(f'Invalid image size {clip_size}. Expected 2 values for (height, width).')
-        self.clip_size = clip_size
+        if img_size and len(img_size) != 2:
+            raise ValueError(f'Invalid image size {img_size}. Expected 2 values for (height, width).')
+        self.img_size = img_size
 
-    def call(self, rel_codes):
+    def call(self, rel_codes: tf.Tensor) -> tf.Tensor:
         """
         Args:
             rel_codes: encoded offsets of shape (batch, n_boxes, 4), in format (center_y, center_x, h, w)
@@ -86,22 +85,22 @@ class BoxDecode(tf.keras.layers.Layer):
         a_y_min, a_x_min, a_y_max, a_x_max = tf.unstack(self.anchors, axis=-1)
         a_y_center, a_x_center, a_h, a_w = corners_to_centroids(a_y_min, a_x_min, a_y_max, a_x_max)
 
-        box_h = tf.exp(scaled_codes[..., 2]) * a_h
-        box_w = tf.exp(scaled_codes[..., 3]) * a_w
         box_y_center = scaled_codes[..., 0] * a_h + a_y_center
         box_x_center = scaled_codes[..., 1] * a_w + a_x_center
+        box_h = tf.exp(scaled_codes[..., 2]) * a_h
+        box_w = tf.exp(scaled_codes[..., 3]) * a_w
         box_y_min, box_x_min, box_y_max, box_x_max = centroids_to_corners(box_y_center, box_x_center, box_h, box_w)
         boxes = tf.stack([box_y_min, box_x_min, box_y_max, box_x_max], axis=-1)
 
-        if self.clip_size:
-            img_h, img_w = self.clip_size
+        if self.img_size:
+            img_h, img_w = self.img_size
             boxes = tf.clip_by_value(boxes, 0, [img_h, img_w, img_h, img_w])
 
         return boxes
 
-    def get_config(self):
+    def get_config(self) -> dict:
         return {
             'anchors': self.anchors.numpy(),
             'scale_factors': self.scale_factors,
-            'clip_size': self.clip_size,
+            'img_size': self.img_size,
         }

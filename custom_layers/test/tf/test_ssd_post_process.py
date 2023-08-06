@@ -27,7 +27,7 @@ import numpy as np
 import tensorflow as tf
 import pytest
 
-from custom_layers.tf import SSDPostProcess, ScoreConverter, BoxDecode
+from custom_layers.tf import SSDPostProcess, ScoreConverter
 
 
 @pytest.fixture
@@ -42,13 +42,14 @@ def img_size():
 
 scores_func = {
     ScoreConverter.LINEAR: lambda scores: scores,
-    ScoreConverter.SIGMOID: lambda scores: 1/(1+np.exp(-scores)),
-    ScoreConverter.SOFTMAX: lambda scores: np.exp(scores)/np.sum(np.exp(scores), axis=-1, keepdims=True),
+    ScoreConverter.SIGMOID: lambda scores: 1 / (1 + np.exp(-scores)),
+    ScoreConverter.SOFTMAX: lambda scores: np.exp(scores) / np.sum(np.exp(scores), axis=-1, keepdims=True),
 }
 
 
 class TestSSDPostProcess:
-    @pytest.mark.parametrize('score_conv', list(ScoreConverter)+[s.value for s in ScoreConverter])    # as enum or str
+
+    @pytest.mark.parametrize('score_conv', list(ScoreConverter) + [s.value for s in ScoreConverter])    # as enum or str
     def test_flow(self, mocker, score_conv, scale_factors, img_size):
         batch_size = 3
         n_boxes = 5
@@ -60,6 +61,7 @@ class TestSSDPostProcess:
 
         # mock box decode inference to return pre-set boxes
         boxes = np.random.rand(batch_size, n_boxes, 4)
+        from custom_layers.tf import BoxDecode
         bd_call = mocker.patch.object(BoxDecode, 'call', Mock(return_value=boxes))
 
         # mock nms op
@@ -103,20 +105,21 @@ class TestSSDPostProcess:
         n_boxes = 5
         # non-overlapping boxes
         boxes = np.array([[[0, .05, .1, .15],
-                          [.2, .25, .3, .35],
-                          [.4, .45, .5, .55],
-                          [.6, .65, .7, .75],
-                          [.8, .85, .9, .95]]]).astype(np.float32)
+                           [.2, .25, .3, .35],
+                           [.4, .45, .5, .55],
+                           [.6, .65, .7, .75],
+                           [.8, .85, .9, .95]]]).astype(np.float32)    # yapf: disable
 
         # mock box decode inference to return pre-set boxes
+        from custom_layers.tf import BoxDecode
         mocker.patch.object(BoxDecode, 'call', Mock(return_value=boxes))
 
         # each valid score appears once to prevent ambiguity in order
         scores = np.array([[[.1, .21, .3],
-                           [.23, .1, .1],
-                           [.1, .25, .22],
-                           [.1, .1, .1],
-                           [0, 0, .5]]]).astype(np.float32)
+                            [.23, .1, .1],
+                            [.1, .25, .22],
+                            [.1, .1, .1],
+                            [0, 0, .5]]]).astype(np.float32)    # yapf: disable
         score_threshold = .2
         max_detections = 10
 
@@ -144,10 +147,13 @@ class TestSSDPostProcess:
         for i, ind in enumerate(exp_box_ind):
             assert np.array_equal(selected_boxes[0, i, :], boxes[0, ind, :])
 
-    @pytest.mark.parametrize('scale_factors, img_size, n_boxes, n_labels, max_detections', [
-       ((1, 2, 3, 4), (10., 20.), 200, 10, 100),    # int factors, float size, n_boxes * n_labels > max_detections
-       ((1.1, 2.1, 3.1, 4.1), (0, 1), 15, 10, 200),    # float factors, int size, n_boxes * n_labels < max_detections
-    ])
+    @pytest.mark.parametrize(
+        'scale_factors, img_size, n_boxes, n_labels, max_detections',
+        [
+            ((1, 2, 3, 4), (10., 20.), 200, 10, 100),    # int factors, float size, n_boxes * n_labels > max_detections
+            ((1.1, 2.1, 3.1, 4.1),
+             (0, 1), 15, 10, 200),    # float factors, int size, n_boxes * n_labels < max_detections
+        ])
     def test_full_op_model(self, tmp_path, scale_factors, img_size, n_boxes, n_labels, max_detections):
         batch_size = 10
         score_thresh = 0.5
@@ -178,10 +184,10 @@ class TestSSDPostProcess:
         out_boxes, out_scores, out_labels, out_n_valid = model([rel_codes, scores])
         assert out_boxes.shape == (batch_size, max_detections, 4)
         assert out_scores.shape == out_labels.shape == (batch_size, max_detections)
-        assert out_n_valid.shape == (batch_size,)
+        assert out_n_valid.shape == (batch_size, )
         valid_score_cnt = np.sum(np.count_nonzero(scores_func[score_conv](scores) > score_thresh, axis=-1), axis=1)
         exp_n_valid = np.minimum(valid_score_cnt, max_detections)
-        assert exp_n_valid.shape == (batch_size,)
+        assert exp_n_valid.shape == (batch_size, )
         assert np.array_equal(out_n_valid.numpy(), exp_n_valid)
 
     @staticmethod

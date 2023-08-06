@@ -21,11 +21,12 @@ Created on 6/27/23
 
 @author: irenab
 """
+from typing import Type
 
 custom_objects = {}
 
 
-def register_layer(kls):
+def register_layer(kls: Type) -> Type:
     """ decorator to automatically add custom layer to custom objects dict """
     custom_objects[kls.__name__] = kls
     return kls

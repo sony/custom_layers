@@ -21,10 +21,11 @@ Created on 6/8/23
 
 @author: irenab
 """
+from typing import Tuple
 
 
-def corners_to_centroids(y_min, x_min, y_max, x_max):
-    """ Converts corners coordinates to centroid coordinates """
+def corners_to_centroids(y_min, x_min, y_max, x_max) -> Tuple:
+    """ Converts corners coordinates into centroid coordinates """
     height = y_max - y_min
     width = x_max - x_min
     y_center = y_min + 0.5 * height
@@ -32,8 +33,8 @@ def corners_to_centroids(y_min, x_min, y_max, x_max):
     return y_center, x_center, height, width
 
 
-def centroids_to_corners(y_center, x_center, height, width):
-    """ Converts centroid coordinates to corners coordinates """
+def centroids_to_corners(y_center, x_center, height, width) -> Tuple:
+    """ Converts centroid coordinates into corners coordinates """
     y_min = y_center - 0.5 * height
     x_min = x_center - 0.5 * width
     y_max = y_min + height
