@@ -17,12 +17,15 @@
 #      The Software is the confidential information of the Company.
 # -------------------------------------------------------------------------------
 """
-Created on 7/9/23
+Created on 8/6/23
 
 @author: irenab
 """
-from .box_decode import BoxDecode
-from .ssd_post_process import SSDPostProcess
-from .score_converter import ScoreConverter
+from enum import Enum
 
-from .custom_objects import custom_objects
+
+class ScoreConverter(str, Enum):
+    # values are compatible with tf activation interface
+    LINEAR = 'linear'
+    SIGMOID = 'sigmoid'
+    SOFTMAX = 'softmax'

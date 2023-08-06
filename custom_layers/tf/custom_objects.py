@@ -21,9 +21,11 @@ Created on 6/27/23
 
 @author: irenab
 """
+
 custom_objects = {}
 
 
 def register_layer(kls):
+    """ decorator to automatically add custom layer to custom objects dict """
     custom_objects[kls.__name__] = kls
     return kls
