@@ -49,8 +49,10 @@ scores_func = {
 
 class TestSSDPostProcess:
 
-    @pytest.mark.parametrize('score_conv', list(ScoreConverter) + [s.value for s in ScoreConverter])    # as enum or str
-    def test_flow(self, mocker, score_conv, scale_factors, img_size):
+    @pytest.mark.parametrize('score_conv, remove_bg',
+                             [(s, True) for s in list(ScoreConverter)] + [(s.value, False)
+                                                                          for s in ScoreConverter])    # as enum or str
+    def test_flow(self, mocker, score_conv, remove_bg, scale_factors, img_size):
         batch_size = 3
         n_boxes = 5
         n_labels = 10
@@ -73,7 +75,8 @@ class TestSSDPostProcess:
                                       score_converter=score_conv,
                                       score_threshold=score_thresh,
                                       iou_threshold=iou_thesh,
-                                      max_detections=max_detections)
+                                      max_detections=max_detections,
+                                      remove_background=remove_bg)
 
         rel_codes = np.random.uniform(0, 1, size=(batch_size, n_boxes, 4)).astype(np.float32)
         scores = np.random.uniform(0, 1, size=(batch_size, n_boxes, n_labels)).astype(np.float32)
@@ -83,13 +86,15 @@ class TestSSDPostProcess:
         # verify box decode params and input are set correctly
         assert post_process.box_decode.scale_factors == scale_factors
         assert np.array_equal(post_process.box_decode.anchors, anchors)
-        assert post_process.box_decode.img_size == img_size
+        assert post_process.box_decode.clip_window == (0, 0, *img_size)
         assert np.array_equal(bd_call.call_args[0][0].numpy(), rel_codes)
 
         # verify nms params and inputs are set correctly
         exp_input_boxes = np.expand_dims(boxes, axis=-2)
         assert np.array_equal(nms.call_args.args[0].numpy(), exp_input_boxes)
         exp_input_scores = scores_func[score_conv](scores)
+        if remove_bg:
+            exp_input_scores = exp_input_scores[..., 1:]
         assert np.allclose(nms.call_args.args[1].numpy(), exp_input_scores)
         assert nms.call_args.kwargs == {
             'max_output_size_per_class': max_detections,
@@ -148,13 +153,14 @@ class TestSSDPostProcess:
             assert np.array_equal(selected_boxes[0, i, :], boxes[0, ind, :])
 
     @pytest.mark.parametrize(
-        'scale_factors, img_size, n_boxes, n_labels, max_detections',
+        'scale_factors, img_size, n_boxes, n_labels, max_detections, remove_bg',
         [
-            ((1, 2, 3, 4), (10., 20.), 200, 10, 100),    # int factors, float size, n_boxes * n_labels > max_detections
+            ((1, 2, 3, 4),
+             (10., 20.), 200, 10, 100, True),    # int factors, float size, n_boxes * n_labels > max_detections
             ((1.1, 2.1, 3.1, 4.1),
-             (0, 1), 15, 10, 200),    # float factors, int size, n_boxes * n_labels < max_detections
+             (0, 1), 15, 10, 200, False),    # float factors, int size, n_boxes * n_labels < max_detections
         ])
-    def test_full_op_model(self, tmp_path, scale_factors, img_size, n_boxes, n_labels, max_detections):
+    def test_full_op_model(self, tmp_path, scale_factors, img_size, n_boxes, n_labels, max_detections, remove_bg):
         batch_size = 10
         score_thresh = 0.5
         iou_thresh = 0.6
@@ -166,11 +172,12 @@ class TestSSDPostProcess:
                                       score_converter=score_conv,
                                       score_threshold=score_thresh,
                                       iou_threshold=iou_thresh,
-                                      max_detections=max_detections)
+                                      max_detections=max_detections,
+                                      remove_background=remove_bg)
         model = self._build_save_load_model(post_process, n_boxes, n_labels, tmp_path / 'model.h5')
 
         cfg = model.layers[-1].get_config()
-        assert len(cfg) == 7
+        assert len(cfg) == 8
         assert np.array_equal(cfg['anchors'], anchors)
         assert tuple(cfg['scale_factors']) == scale_factors
         assert tuple(cfg['img_size']) == img_size
@@ -178,6 +185,7 @@ class TestSSDPostProcess:
         assert cfg['score_threshold'] == score_thresh
         assert cfg['iou_threshold'] == iou_thresh
         assert cfg['max_detections'] == max_detections
+        assert cfg['remove_background'] == remove_bg
 
         rel_codes = np.random.uniform(0, 1, size=(batch_size, n_boxes, 4)).astype(np.float32)
         scores = np.random.randn(batch_size, n_boxes, n_labels).astype(np.float32)

@@ -21,7 +21,7 @@ Created on 7/30/23
 
 @author: irenab
 """
-from typing import Sequence
+from typing import Sequence, Tuple
 
 import tensorflow as tf
 import numpy as np
@@ -33,20 +33,29 @@ from .custom_objects import register_layer
 @register_layer
 class SSDPostProcess(tf.keras.layers.Layer):
 
-    def __init__(self, anchors: np.ndarray, scale_factors: Sequence[int | float], img_size: Sequence[int | float],
-                 score_converter: ScoreConverter, score_threshold: float, iou_threshold: float, max_detections: int,
+    def __init__(self,
+                 anchors: np.ndarray,
+                 scale_factors: Sequence[int | float],
+                 img_size: Sequence[int | float],
+                 score_converter: ScoreConverter,
+                 score_threshold: float,
+                 iou_threshold: float,
+                 max_detections: int,
+                 remove_background: bool = False,
                  **kwargs):
         """
+        SSD Post Processing
 
         Args:
-            anchors: anchors of shape (n_boxes, 4) in corners coordinates (y_min, x_min, y_max, x_max)
-            scale_factors: box decoding scaling factors in format (y, x, height, width)
+            anchors: anchors of shape (n_boxes, 4) in corners coordinates (y_min, x_min, y_max, x_max).
+            scale_factors: box decoding scaling factors in format (y, x, height, width).
             img_size: image size for clipping of decoded boxes in format (height, width).
                       Decoded boxes coordinates will be clipped into the range y=[0, height], x=[0, width].
             score_converter: op to apply on input logits (sigmoid, softmax or linear).
             score_threshold: score threshold for non-maximum suppression.
             iou_threshold: intersection over union threshold for son-maximum suppression.
             max_detections: number of detections to return.
+            remove_background: if True, first class is sliced out from inputs scores.
 
         """
         super().__init__(**kwargs)
@@ -55,9 +64,10 @@ class SSDPostProcess(tf.keras.layers.Layer):
         self.score_threshold = score_threshold
         self.iou_threshold = iou_threshold
         self.max_detections = max_detections
-        self.box_decode = BoxDecode(anchors, scale_factors, img_size)
+        self.remove_background = remove_background
+        self.box_decode = BoxDecode(anchors, scale_factors, (0, 0, *img_size))
 
-    def call(self, inputs: Sequence[tf.Tensor]) -> tf.Tensor:
+    def call(self, inputs: Sequence[tf.Tensor]) -> Tuple[tf.Tensor]:
         """
 
         Args:
@@ -66,10 +76,13 @@ class SSDPostProcess(tf.keras.layers.Layer):
                     - scores/logits of shape (batch, n_boxes, n_labels)
         Returns:
             - selected boxes sorted by scores in decreasing order, of shape (batch, max_detections, 4),
-              in corners coordinates (min_y, min_x, max_y, max_x)
+              in corners coordinates (y_min, x_min, y_max, x_max)
             - scores corresponding to the selected boxes, of shape (batch, max_detection)
             - labels corresponding to the selected boxes, of shape (batch, max_detections)
             - number of valid detections
+
+        Raises:
+            ValueError if receives input tensors with unexpected or non-matching shapes
         """
         rel_codes, scores = inputs
         if len(rel_codes.shape) != 3 and rel_codes.shape[-1] != 4:
@@ -82,6 +95,9 @@ class SSDPostProcess(tf.keras.layers.Layer):
 
         if self.score_converter != ScoreConverter.LINEAR:
             scores = tf.keras.layers.Activation(self.score_converter)(scores)
+
+        if self.remove_background:
+            scores = tf.slice(scores, begin=[0, 0, 1], size=[-1, -1, -1])
 
         decoded_boxes = self.box_decode(rel_codes)
         # when decoded_boxes.shape[-2]==1, nms uses same boxes for all classes
@@ -105,4 +121,5 @@ class SSDPostProcess(tf.keras.layers.Layer):
             'score_threshold': self.score_threshold,
             'iou_threshold': self.iou_threshold,
             'max_detections': self.max_detections,
+            'remove_background': self.remove_background,
         }

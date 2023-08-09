@@ -21,7 +21,7 @@ Created on 6/8/23
 
 @author: irenab
 """
-from typing import Sequence, Optional, Any
+from typing import Sequence, Any
 
 import tensorflow as tf
 import numpy as np
@@ -33,7 +33,7 @@ from custom_layers.tf.custom_objects import register_layer
 @register_layer
 class BoxDecode(tf.keras.layers.Layer):
 
-    def __init__(self, anchors: np.ndarray, scale_factors: Sequence[float], img_size: Optional[Sequence[float]],
+    def __init__(self, anchors: np.ndarray, scale_factors: Sequence[float | int], clip_window: Sequence[float | int],
                  **kwargs: Any):
         """
         Box decoding per Faster R-CNN, with clipping to image size.
@@ -41,9 +41,7 @@ class BoxDecode(tf.keras.layers.Layer):
         Args:
             anchors: anchors of shape (n_boxes, 4) in corners coordinates (y_min, x_min, y_max, x_max)
             scale_factors: scaling factors in format (y, x, height, width)
-            img_size: image size for clipping in format (height, width). Decoded boxes coordinates will be clipped
-                       into the range y=[0, height], x=[0, width].
-                       If None, clipping is skipped.
+            clip_window: clipping window in format (y_min, x_min, y_max, x_max)
 
         Raises:
             ValueError if receives invalid parameters
@@ -59,17 +57,17 @@ class BoxDecode(tf.keras.layers.Layer):
             raise ValueError(f'Invalid scale factors {scale_factors}. Expected 4 values for (y, x, height, width).')
         self.scale_factors = scale_factors
 
-        if img_size and len(img_size) != 2:
-            raise ValueError(f'Invalid image size {img_size}. Expected 2 values for (height, width).')
-        self.img_size = img_size
+        if len(clip_window) != 4:
+            raise ValueError(f'Invalid clip window {clip_window}. Expected 4 values for (y_min, x_min, y_max, x_max).')
+        self.clip_window = clip_window
 
     def call(self, rel_codes: tf.Tensor) -> tf.Tensor:
         """
         Args:
-            rel_codes: encoded offsets of shape (batch, n_boxes, 4), in format (center_y, center_x, h, w)
+            rel_codes: encoded offsets of shape (batch, n_boxes, 4) in centroids coordinates (y_center, x_center, h, w)
 
         Returns:
-            decoded boxes of shape (batch, n_boxes, 4) in format (min_y, min_x, max_y, max_x)
+            decoded boxes of shape (batch, n_boxes, 4) in corners coordiantes (y_min, x_min, y_max, x_max)
 
         Raises:
             ValurError if receives input tensor with unexpected shape
@@ -92,15 +90,13 @@ class BoxDecode(tf.keras.layers.Layer):
         box_y_min, box_x_min, box_y_max, box_x_max = centroids_to_corners(box_y_center, box_x_center, box_h, box_w)
         boxes = tf.stack([box_y_min, box_x_min, box_y_max, box_x_max], axis=-1)
 
-        if self.img_size:
-            img_h, img_w = self.img_size
-            boxes = tf.clip_by_value(boxes, 0, [img_h, img_w, img_h, img_w])
-
+        y_low, x_low, y_high, x_high = self.clip_window
+        boxes = tf.clip_by_value(boxes, [y_low, x_low, y_low, x_low], [y_high, x_high, y_high, x_high])
         return boxes
 
     def get_config(self) -> dict:
         return {
             'anchors': self.anchors.numpy(),
             'scale_factors': self.scale_factors,
-            'img_size': self.img_size,
+            'clip_window': self.clip_window,
         }
