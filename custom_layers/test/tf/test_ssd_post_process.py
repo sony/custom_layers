@@ -84,9 +84,9 @@ class TestSSDPostProcess:
         out = post_process([rel_codes, scores])
 
         # verify box decode params and input are set correctly
-        assert post_process.box_decode.scale_factors == scale_factors
-        assert np.array_equal(post_process.box_decode.anchors, anchors)
-        assert post_process.box_decode.clip_window == (0, 0, *img_size)
+        assert post_process._box_decode.scale_factors == scale_factors
+        assert np.array_equal(post_process._box_decode.anchors, anchors)
+        assert post_process._box_decode.clip_window == (0, 0, *img_size)
         assert np.array_equal(bd_call.call_args[0][0].numpy(), rel_codes)
 
         # verify nms params and inputs are set correctly

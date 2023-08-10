@@ -29,16 +29,19 @@ import pytest
 
 class TestBoxDecode:
 
-    @pytest.mark.parametrize('scale_factors, clip_window', [([1, 2, 3, 4], [-1.5, 1.5, 10.1, 20.1]),
-                                                            ([1.1, 2.2, 3.3, 4.4], [0, 1, 2, 3])])
-    def test_load_custom(self, scale_factors, clip_window, tmp_path):
+    @pytest.mark.parametrize('scale_factors, clip_window, tf_anchors', [([1, 2, 3, 4], [-1.5, 1.5, 10.1, 20.1], False),
+                                                                        ([1.1, 2.2, 3.3, 4.4], [0, 1, 2, 3], True)])
+    def test_load_custom(self, scale_factors, clip_window, tmp_path, tf_anchors):
         shape = (10, 4)
         path = tmp_path / 'model.h5'
         anchors = np.random.uniform(size=shape).astype(np.float32)
-        self._build_box_decode(anchors, scale_factors, clip_window, path)
+        if tf_anchors:
+            anchors = tf.constant(anchors)
+        orig_model = self._build_model(anchors, scale_factors, clip_window)
+        orig_model.save(path)
+
         with pytest.raises(ValueError, match='Unknown layer.*BoxDecode'):
             tf.keras.models.load_model(path)
-
         from custom_layers.tf import custom_objects
         model = tf.keras.models.load_model(path, custom_objects=custom_objects)
 
@@ -52,7 +55,7 @@ class TestBoxDecode:
     def test_zero_offsets(self):
         n_boxes = 100
         anchors = self._generate_random_anchors(n_boxes, seed=1)
-        model = self._build_box_decode(anchors, (1, 2, 3, 4), (0, 0, 1, 1))
+        model = self._build_model(anchors, (1, 2, 3, 4), (0, 0, 1, 1))
         out = model(np.zeros((2, n_boxes, 4)).astype(np.float32))
         assert np.allclose(out, anchors)
 
@@ -74,7 +77,7 @@ class TestBoxDecode:
         offsets[:, :, 3] = v3 * scale_factors[3]
 
         # disable clipping
-        model = self._build_box_decode(anchors, scale_factors, clip_window=(-1000, -1000, 1000, 1000))
+        model = self._build_model(anchors, scale_factors, clip_window=(-1000, -1000, 1000, 1000))
         boxes = model(offsets)
         boxes_hw = boxes[..., 2:] - boxes[..., :2]
         anchors_hw = anchors[..., 2:] - anchors[..., :2]
@@ -107,7 +110,7 @@ class TestBoxDecode:
         ]).astype(np.float32)
 
         rel_codes = self._encode_offsets(boxes, anchors, scale_factors=scale_factors)
-        model = self._build_box_decode(anchors, scale_factors=scale_factors, clip_window=clip_window)
+        model = self._build_model(anchors, scale_factors=scale_factors, clip_window=clip_window)
         out = model(rel_codes)
         exp_boxes = mul * np.array([
             [
@@ -151,11 +154,9 @@ class TestBoxDecode:
         return t * np.asarray(scale_factors)
 
     @staticmethod
-    def _build_box_decode(anchors, scale_factors, clip_window, path=None):
+    def _build_model(anchors, scale_factors, clip_window):
         from custom_layers.tf.box_decode import BoxDecode
         box_decode = BoxDecode(anchors=anchors, scale_factors=scale_factors, clip_window=clip_window)
         x = tf.keras.layers.Input(anchors.shape)
         model = tf.keras.Model(x, box_decode(x))
-        if path:
-            model.save(path)
         return model
