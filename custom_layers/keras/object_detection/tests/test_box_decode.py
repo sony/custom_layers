@@ -35,7 +35,7 @@ class TestBoxDecode:
 
         with pytest.raises(ValueError, match='Unknown layer.*FasterRCNNBoxDecode'):
             tf.keras.models.load_model(path)
-        from custom_layers.tf import custom_objects
+        from custom_layers.keras import custom_objects
         model = tf.keras.models.load_model(path, custom_objects=custom_objects)
 
         cfg = model.layers[-1].get_config()
@@ -148,7 +148,7 @@ class TestBoxDecode:
 
     @staticmethod
     def _build_model(anchors, scale_factors, clip_window):
-        from custom_layers.tf.object_detection.faster_rcnn_box_decode import FasterRCNNBoxDecode
+        from custom_layers.keras.object_detection.faster_rcnn_box_decode import FasterRCNNBoxDecode
         box_decode = FasterRCNNBoxDecode(anchors=anchors, scale_factors=scale_factors, clip_window=clip_window)
         x = tf.keras.layers.Input(anchors.shape)
         model = tf.keras.Model(x, box_decode(x))

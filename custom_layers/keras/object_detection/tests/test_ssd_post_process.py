@@ -20,7 +20,7 @@ import numpy as np
 import tensorflow as tf
 import pytest
 
-from custom_layers.tf.object_detection import SSDPostProcess, ScoreConverter
+from custom_layers.keras.object_detection import SSDPostProcess, ScoreConverter
 
 
 @pytest.fixture
@@ -56,7 +56,7 @@ class TestSSDPostProcess:
 
         # mock box decode inference to return pre-set boxes
         boxes = np.random.rand(batch_size, n_boxes, 4)
-        from custom_layers.tf.object_detection import FasterRCNNBoxDecode
+        from custom_layers.keras.object_detection import FasterRCNNBoxDecode
         bd_call = mocker.patch.object(FasterRCNNBoxDecode, 'call', Mock(return_value=boxes))
 
         # mock nms op
@@ -109,7 +109,7 @@ class TestSSDPostProcess:
                            [.8, .85, .9, .95]]]).astype(np.float32)    # yapf: disable
 
         # mock box decode inference to return pre-set boxes
-        from custom_layers.tf.object_detection import FasterRCNNBoxDecode
+        from custom_layers.keras.object_detection import FasterRCNNBoxDecode
         mocker.patch.object(FasterRCNNBoxDecode, 'call', Mock(return_value=boxes))
 
         # each valid score appears once to prevent ambiguity in order
@@ -201,6 +201,6 @@ class TestSSDPostProcess:
         with pytest.raises(ValueError, match='Unknown layer.*SSDPostProcess'):
             tf.keras.models.load_model(path)
 
-        from custom_layers.tf import custom_objects
+        from custom_layers.keras import custom_objects
         model = tf.keras.models.load_model(path, custom_objects=custom_objects)
         return model

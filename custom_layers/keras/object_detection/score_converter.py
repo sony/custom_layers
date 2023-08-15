@@ -13,3 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+
+from enum import Enum
+
+
+class ScoreConverter(str, Enum):
+    # values are compatible with keras activation interface
+    LINEAR = 'linear'
+    SIGMOID = 'sigmoid'
+    SOFTMAX = 'softmax'

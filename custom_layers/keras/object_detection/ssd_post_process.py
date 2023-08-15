@@ -20,8 +20,8 @@ import dataclasses
 import tensorflow as tf
 import numpy as np
 
-from custom_layers.tf.object_detection import FasterRCNNBoxDecode, ScoreConverter
-from custom_layers.tf.custom_objects import register_layer
+from custom_layers.keras.object_detection import FasterRCNNBoxDecode, ScoreConverter
+from custom_layers.keras.custom_objects import register_layer
 
 
 @dataclasses.dataclass

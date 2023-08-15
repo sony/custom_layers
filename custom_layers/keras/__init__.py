@@ -14,11 +14,4 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from enum import Enum
-
-
-class ScoreConverter(str, Enum):
-    # values are compatible with tf activation interface
-    LINEAR = 'linear'
-    SIGMOID = 'sigmoid'
-    SOFTMAX = 'softmax'
+from custom_layers.keras.custom_objects import custom_objects
