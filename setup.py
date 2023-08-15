@@ -26,6 +26,6 @@ from custom_layers.version import __version__
 
 setup(name='custom_layers',
       version=__version__,
-      packages=find_packages(include='custom_layers.tf*'),
+      packages=find_packages(include='custom_layers.keras*', exclude=['*tests*']),
       python_requires='>=3.10',
       requires=['tensorflow', 'numpy'])
