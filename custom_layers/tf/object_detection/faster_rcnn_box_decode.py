@@ -26,12 +26,12 @@ from typing import Sequence, Any
 import tensorflow as tf
 import numpy as np
 
-from custom_layers.tf.box_utils import corners_to_centroids, centroids_to_corners
+from custom_layers.tf.object_detection.box_utils import corners_to_centroids, centroids_to_corners
 from custom_layers.tf.custom_objects import register_layer
 
 
 @register_layer
-class BoxDecode(tf.keras.layers.Layer):
+class FasterRCNNBoxDecode(tf.keras.layers.Layer):
 
     def __init__(self, anchors: np.ndarray | tf.Tensor, scale_factors: Sequence[float | int],
                  clip_window: Sequence[float | int], **kwargs: Any):

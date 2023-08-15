@@ -27,8 +27,8 @@ import dataclasses
 import tensorflow as tf
 import numpy as np
 
-from . import BoxDecode, ScoreConverter
-from .custom_objects import register_layer
+from custom_layers.tf.object_detection import FasterRCNNBoxDecode, ScoreConverter
+from custom_layers.tf.custom_objects import register_layer
 
 
 @dataclasses.dataclass
@@ -83,7 +83,7 @@ class SSDPostProcess(tf.keras.layers.Layer):
                                       iou_threshold=iou_threshold,
                                       max_detections=max_detections,
                                       remove_background=remove_background)
-        self._box_decode = BoxDecode(anchors, scale_factors, (0, 0, *img_size))
+        self._box_decode = FasterRCNNBoxDecode(anchors, scale_factors, (0, 0, *img_size))
 
     def call(self, inputs: Sequence[tf.Tensor], *args, **kwargs) -> Tuple[tf.Tensor]:
         """

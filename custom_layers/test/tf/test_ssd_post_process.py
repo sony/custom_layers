@@ -27,7 +27,7 @@ import numpy as np
 import tensorflow as tf
 import pytest
 
-from custom_layers.tf import SSDPostProcess, ScoreConverter
+from custom_layers.tf.object_detection import SSDPostProcess, ScoreConverter
 
 
 @pytest.fixture
@@ -63,8 +63,8 @@ class TestSSDPostProcess:
 
         # mock box decode inference to return pre-set boxes
         boxes = np.random.rand(batch_size, n_boxes, 4)
-        from custom_layers.tf import BoxDecode
-        bd_call = mocker.patch.object(BoxDecode, 'call', Mock(return_value=boxes))
+        from custom_layers.tf.object_detection import FasterRCNNBoxDecode
+        bd_call = mocker.patch.object(FasterRCNNBoxDecode, 'call', Mock(return_value=boxes))
 
         # mock nms op
         nms = mocker.patch('tensorflow.image.combined_non_max_suppression')
@@ -116,8 +116,8 @@ class TestSSDPostProcess:
                            [.8, .85, .9, .95]]]).astype(np.float32)    # yapf: disable
 
         # mock box decode inference to return pre-set boxes
-        from custom_layers.tf import BoxDecode
-        mocker.patch.object(BoxDecode, 'call', Mock(return_value=boxes))
+        from custom_layers.tf.object_detection import FasterRCNNBoxDecode
+        mocker.patch.object(FasterRCNNBoxDecode, 'call', Mock(return_value=boxes))
 
         # each valid score appears once to prevent ambiguity in order
         scores = np.array([[[.1, .21, .3],
