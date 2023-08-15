@@ -17,15 +17,8 @@
 #      The Software is the confidential information of the Company.
 # -------------------------------------------------------------------------------
 """
-Created on 7/9/23
+Created on 8/15/23
 
 @author: irenab
 """
-from setuptools import setup, find_packages
-from custom_layers.version import __version__
-
-setup(name='custom_layers',
-      version=__version__,
-      packages=find_packages(include='custom_layers.tf*'),
-      python_requires='>=3.10',
-      requires=['tensorflow', 'numpy'])
+__version__ = '1.0.0.dev1'
