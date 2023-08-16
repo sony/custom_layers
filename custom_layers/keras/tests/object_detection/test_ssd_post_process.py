@@ -21,7 +21,7 @@ import tensorflow as tf
 import pytest
 
 from custom_layers.keras.object_detection import SSDPostProcess, ScoreConverter
-from custom_layers.keras.tests.common import custom_objects_test
+from custom_layers.keras.tests.common import CustomOpTesterBase
 
 
 @pytest.fixture
@@ -41,10 +41,10 @@ scores_func = {
 }
 
 
-class TestSSDPostProcess:
+class TestSSDPostProcess(CustomOpTesterBase):
 
     def test_custom_objects(self):
-        custom_objects_test(SSDPostProcess.__name__)
+        self._test_clean_custom_objects(SSDPostProcess.__name__)
 
     @pytest.mark.parametrize('score_conv, remove_bg',
                              [(s, True) for s in list(ScoreConverter)] + [(s.value, False)
@@ -157,7 +157,8 @@ class TestSSDPostProcess:
             ((1.1, 2.1, 3.1, 4.1),
              (0, 1), 15, 10, 200, False),    # float factors, int size, n_boxes * n_labels < max_detections
         ])
-    def test_full_op_model(self, tmp_path, scale_factors, img_size, n_boxes, n_labels, max_detections, remove_bg):
+    def test_full_op_model(self, tmp_path, scale_factors, img_size, n_boxes, n_labels, max_detections, remove_bg,
+                           save_format_ext):
         batch_size = 10
         score_thresh = 0.5
         iou_thresh = 0.6
@@ -171,7 +172,16 @@ class TestSSDPostProcess:
                                       iou_threshold=iou_thresh,
                                       max_detections=max_detections,
                                       remove_background=remove_bg)
-        model = self._build_save_load_model(post_process, n_boxes, n_labels, tmp_path / 'model.h5')
+
+        orig_model = self._build_model(post_process, n_boxes, n_labels)
+        path = tmp_path / f'model{save_format_ext}'
+        orig_model.save(path)
+
+        # check that the model can be loaded from a clean process (not contaminated by previous imports)
+        self._test_clean_load_model_with_custom_objects(path)
+
+        from custom_layers.keras import custom_objects
+        model = tf.keras.models.load_model(path, custom_objects=custom_objects)
 
         cfg = model.layers[-1].get_config()
         assert len(cfg) == 8
@@ -195,16 +205,9 @@ class TestSSDPostProcess:
         assert exp_n_valid.shape == (batch_size, )
         assert np.array_equal(out_n_valid.numpy(), exp_n_valid)
 
-    @staticmethod
-    def _build_save_load_model(post_process_op, n_boxes, n_labels, path):
+    def _build_model(self, post_process_op, n_boxes, n_labels):
         rel_codes = tf.keras.layers.Input(shape=(n_boxes, 4))
         scores = tf.keras.layers.Input(shape=(n_boxes, n_labels))
         out = post_process_op([rel_codes, scores])
         model = tf.keras.Model(inputs=[rel_codes, scores], outputs=out)
-        model.save(path)
-        with pytest.raises(ValueError, match='Unknown layer.*SSDPostProcess'):
-            tf.keras.models.load_model(path)
-
-        from custom_layers.keras import custom_objects
-        model = tf.keras.models.load_model(path, custom_objects=custom_objects)
         return model

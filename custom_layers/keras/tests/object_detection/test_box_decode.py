@@ -19,24 +19,24 @@ import tensorflow as tf
 import pytest
 
 from custom_layers.keras.object_detection import FasterRCNNBoxDecode
-from custom_layers.keras.tests.common import custom_objects_test
+from custom_layers.keras.tests.common import CustomOpTesterBase
 
 
-class TestBoxDecode:
-
-    def test_custom_objects(self):
-        custom_objects_test(FasterRCNNBoxDecode.__name__)
+class TestBoxDecode(CustomOpTesterBase):
 
     @pytest.mark.parametrize('scale_factors, clip_window, tf_anchors', [([1, 2, 3, 4], [-1.5, 1.5, 10.1, 20.1], False),
                                                                         ([1.1, 2.2, 3.3, 4.4], [0, 1, 2, 3], True)])
-    def test_load_custom(self, scale_factors, clip_window, tmp_path, tf_anchors):
+    def test_load_custom(self, scale_factors, clip_window, tmp_path, tf_anchors, save_format_ext):
         shape = (10, 4)
-        path = tmp_path / 'model.h5'
-        anchors = np.random.uniform(size=shape).astype(np.float32)
+        path = tmp_path / f'model{save_format_ext}'
+        anchors = self._generate_random_anchors(n_anchors=10, seed=1)
         if tf_anchors:
             anchors = tf.constant(anchors)
         orig_model = self._build_model(anchors, scale_factors, clip_window)
         orig_model.save(path)
+
+        # check that the model can be loaded from a clean process (not contaminated by previous imports)
+        self._test_clean_load_model_with_custom_objects(path)
 
         from custom_layers.keras import custom_objects
         model = tf.keras.models.load_model(path, custom_objects=custom_objects)
@@ -151,7 +151,6 @@ class TestBoxDecode:
 
     @staticmethod
     def _build_model(anchors, scale_factors, clip_window):
-        from custom_layers.keras.object_detection import FasterRCNNBoxDecode
         box_decode = FasterRCNNBoxDecode(anchors=anchors, scale_factors=scale_factors, clip_window=clip_window)
         x = tf.keras.layers.Input(anchors.shape)
         model = tf.keras.Model(x, box_decode(x))

@@ -17,8 +17,27 @@ import os
 import sys
 
 
-def custom_objects_test(op: str):
-    """ test in a clean process that op registration to custom_objects is triggered upon import """
-    cmd = f"from custom_layers.keras import custom_objects; assert '{op}' in custom_objects"
-    ret = os.system(f'{sys.executable} -c "{cmd}"')
-    assert ret == 0
+class CustomOpTesterBase:
+
+    @staticmethod
+    def _test_clean_custom_objects(op: str):
+        """ test in a clean process that op registration to custom_objects is triggered upon import """
+        cmd = f"from custom_layers.keras import custom_objects;" \
+              f"assert '{op}' in custom_objects"
+        ret = os.system(f'{sys.executable} -c "{cmd}"')
+        assert ret == 0
+
+    @staticmethod
+    def _test_clean_load_model_with_custom_objects(path):
+        cmd = f"import tensorflow as tf;" \
+              f"from custom_layers.keras import custom_objects;" \
+              f"tf.keras.models.load_model('{path}', custom_objects=custom_objects)"
+        ret = os.system(f'{sys.executable} -c "{cmd}"')
+        assert ret == 0
+
+    @staticmethod
+    def _test_load_model(path):
+        cmd = f"import tensorflow as tf;" \
+              f"tf.keras.models.load_model('{path}')"
+        ret = os.system(f'{sys.executable} -c "{cmd}"')
+        assert ret == 0
