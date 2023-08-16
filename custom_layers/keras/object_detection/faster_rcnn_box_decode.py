@@ -14,7 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from typing import Sequence, Any
+from typing import Sequence, Union
 
 import tensorflow as tf
 import numpy as np
@@ -26,8 +26,8 @@ from custom_layers.keras.custom_objects import register_layer
 @register_layer
 class FasterRCNNBoxDecode(tf.keras.layers.Layer):
 
-    def __init__(self, anchors: np.ndarray | tf.Tensor, scale_factors: Sequence[float | int],
-                 clip_window: Sequence[float | int], **kwargs: Any):
+    def __init__(self, anchors: Union[np.ndarray, tf.Tensor], scale_factors: Sequence[Union[float, int]],
+                 clip_window: Sequence[Union[float, int]], **kwargs):
         """
         Box decoding per Faster R-CNN with clipping
 

@@ -14,7 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, Union
 import dataclasses
 
 import tensorflow as tf
@@ -26,10 +26,10 @@ from custom_layers.keras.custom_objects import register_layer
 
 @dataclasses.dataclass
 class SSDPostProcessCfg:
-    anchors: np.ndarray | tf.Tensor
-    scale_factors: Sequence[float | int]
-    img_size: Sequence[float | int]
-    score_converter: ScoreConverter | str
+    anchors: Union[np.ndarray, tf.Tensor]
+    scale_factors: Sequence[Union[float, int]]
+    img_size: Sequence[Union[float, int]]
+    score_converter: Union[ScoreConverter, str]
     score_threshold: float
     iou_threshold: float
     max_detections: float
@@ -43,10 +43,10 @@ class SSDPostProcessCfg:
 class SSDPostProcess(tf.keras.layers.Layer):
 
     def __init__(self,
-                 anchors: np.ndarray | tf.Tensor,
-                 scale_factors: Sequence[int | float],
-                 img_size: Sequence[int | float],
-                 score_converter: ScoreConverter | str,
+                 anchors: Union[np.ndarray, tf.Tensor],
+                 scale_factors: Sequence[Union[int, float]],
+                 img_size: Sequence[Union[int, float]],
+                 score_converter: Union[ScoreConverter, str],
                  score_threshold: float,
                  iou_threshold: float,
                  max_detections: int,
