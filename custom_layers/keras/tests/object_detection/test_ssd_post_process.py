@@ -21,6 +21,7 @@ import tensorflow as tf
 import pytest
 
 from custom_layers.keras.object_detection import SSDPostProcess, ScoreConverter
+from custom_layers.keras.tests.common import custom_objects_test
 
 
 @pytest.fixture
@@ -41,6 +42,9 @@ scores_func = {
 
 
 class TestSSDPostProcess:
+
+    def test_custom_objects(self):
+        custom_objects_test(SSDPostProcess.__name__)
 
     @pytest.mark.parametrize('score_conv, remove_bg',
                              [(s, True) for s in list(ScoreConverter)] + [(s.value, False)
