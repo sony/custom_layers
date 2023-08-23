@@ -21,11 +21,6 @@ Created on 7/9/23
 
 @author: irenab
 """
-from setuptools import setup, find_packages
-from sony_custom_layers.version import __version__
+from setuptools import setup
 
-setup(name='sony_custom_layers',
-      version=__version__,
-      packages=find_packages(include='sony_custom_layers.keras*', exclude=['*tests*']),
-      python_requires='>=3.8,<3.11',
-      install_requires=['tensorflow>=2.10,<2.13', 'numpy'])
+setup()
