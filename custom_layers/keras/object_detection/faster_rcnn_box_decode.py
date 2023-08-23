@@ -29,17 +29,15 @@ class FasterRCNNBoxDecode(tf.keras.layers.Layer):
     def __init__(self, anchors: Union[np.ndarray, tf.Tensor], scale_factors: Sequence[Union[float, int]],
                  clip_window: Sequence[Union[float, int]], **kwargs):
         """
-        Box decoding per Faster R-CNN with clipping
+        Box decoding as per Faster R-CNN (https://arxiv.org/abs/1506.01497).
 
         Args:
-            anchors: anchors of shape (n_boxes, 4) in corners coordinates (y_min, x_min, y_max, x_max)
-            scale_factors: scaling factors in format (y, x, height, width)
-            clip_window: clipping window in format (y_min, x_min, y_max, x_max)
-
+            anchors: Anchors with a shape of (n_boxes, 4) in corner coordinates (y_min, x_min, y_max, x_max).
+            scale_factors: Scaling factors in the format (y, x, height, width).
+            clip_window: Clipping window in the format (y_min, x_min, y_max, x_max).
 
         Raises:
-            ValueError if receives invalid parameters
-
+            ValueError: If provided with invalid parameters.
         """
         super().__init__(**kwargs)
         anchors = tf.constant(anchors)
@@ -58,14 +56,14 @@ class FasterRCNNBoxDecode(tf.keras.layers.Layer):
     def call(self, rel_codes: tf.Tensor, *args, **kwargs) -> tf.Tensor:
         """
         Args:
-            rel_codes: encoded offsets of shape (batch, n_boxes, 4) in centroids coordinates (y_center, x_center, h, w)
+            rel_codes: Relative codes (encoded offsets) with a shape of (batch, n_boxes, 4) in centroid coordinates
+                       (y_center, x_center, h, w).
 
         Returns:
-            decoded boxes of shape (batch, n_boxes, 4) in corners coordinates (y_min, x_min, y_max, x_max)
+            Decoded boxes with a shape of (batch, n_boxes, 4) in corner coordinates (y_min, x_min, y_max, x_max).
 
         Raises:
-            ValurError if receives input tensor with unexpected shape
-
+            ValueError: If an input tensor with an unexpected shape is received.
         """
         if len(rel_codes.shape) != 3 or rel_codes.shape[-1] != 4:
             raise ValueError(f'Invalid input tensor shape {rel_codes.shape}. Expected shape (batch, n_boxes, 4).')

@@ -53,18 +53,19 @@ class SSDPostProcess(tf.keras.layers.Layer):
                  remove_background: bool = False,
                  **kwargs):
         """
-        SSD Post Processing
+        SSD Post Processing, based on https://arxiv.org/abs/1512.02325.
 
         Args:
-            anchors: anchors of shape (n_boxes, 4) in corners coordinates (y_min, x_min, y_max, x_max).
-            scale_factors: box decoding scaling factors in format (y, x, height, width).
-            img_size: image size for clipping of decoded boxes in format (height, width).
-                      Decoded boxes coordinates will be clipped into the range y=[0, height], x=[0, width].
-            score_converter: conversion to apply on input logits (sigmoid, softmax or linear).
-            score_threshold: score threshold for non-maximum suppression.
-            iou_threshold: intersection over union threshold for non-maximum suppression.
-            max_detections: number of detections to return.
-            remove_background: if True, first class is sliced out from inputs scores (after score_converter is applied)
+            anchors: Anchors with a shape of (n_boxes, 4) in corner coordinates (y_min, x_min, y_max, x_max).
+            scale_factors: Box decoding scaling factors in the format (y, x, height, width).
+            img_size: Image size in the format (height, width). This is used for clipping the decoded boxes.
+                      The decoded box coordinates will be clipped to the range y=[0, height] and x=[0, width].
+            score_converter: Conversion to apply to the input logits (sigmoid, softmax, or linear).
+            score_threshold: Score threshold for non-maximum suppression.
+            iou_threshold: Intersection over union threshold for non-maximum suppression.
+            max_detections: The number of detections to return.
+            remove_background: If True, the first class is removed from the input scores (after the score_converter is
+                               applied).
 
         """
         super().__init__(**kwargs)
@@ -81,26 +82,30 @@ class SSDPostProcess(tf.keras.layers.Layer):
     def call(self, inputs: Sequence[tf.Tensor], *args, **kwargs) -> Tuple[tf.Tensor]:
         """
         Args:
-            inputs: a list/tuple of (rel_codes, scores)
-                    0: encoded offsets of shape (batch, n_boxes, 4) in centroids coordinates (y_center, x_center, w, h)
-                    1: scores/logits of shape (batch, n_boxes, n_labels)
+            inputs: A list or tuple consisting of (rel_codes, scores).
+              0: Relative codes (encoded offsets) with a shape of (batch, n_boxes, 4) in centroid coordinates
+                 (y_center, x_center, w, h).
+              1: Scores or logits with a shape of (batch, n_boxes, n_labels).
 
         Returns:
-            0: selected boxes sorted by scores in decreasing order, of shape (batch, max_detections, 4),
-                in corners coordinates (y_min, x_min, y_max, x_max)
-            1: scores corresponding to the selected boxes, of shape (batch, max_detection)
-            2: labels corresponding to the selected boxes, of shape (batch, max_detections)
-            3: the number of valid detections out of max_detections
+            0: Selected boxes sorted by scores in descending order, with a shape of (batch, max_detections, 4),
+               in corner coordinates (y_min, x_min, y_max, x_max).
+            1: Scores corresponding to the selected boxes, with a shape of (batch, max_detections).
+            2: Labels corresponding to the selected boxes, with a shape of (batch, max_detections).
+               Each label corresponds to the class index of the selected score in the input scores.
+            3: The number of valid detections out of max_detections.
 
         Raises:
-            ValueError if receives input tensors with unexpected or non-matching shapes
+            ValueError: If provided input tensors have unexpected or non-matching shapes.
         """
 
         rel_codes, scores = inputs
         if len(rel_codes.shape) != 3 and rel_codes.shape[-1] != 4:
-            raise ValueError(f'Invalid input codes shape {rel_codes.shape}. Expected shape (batch, n_boxes, 4).')
+            raise ValueError(f'Invalid input offsets shape {rel_codes.shape}. '
+                             f'Expected shape (batch, n_boxes, 4).')
         if len(scores.shape) != 3:
-            raise ValueError(f'Invalid input scores shape {scores.shape}. Expected shape (batch, n_boxes, n_labels).')
+            raise ValueError(f'Invalid input scores shape {scores.shape}. '
+                             f'Expected shape (batch, n_boxes, n_labels).')
         if rel_codes.shape[-2] != scores.shape[-2]:
             raise ValueError(f'Mismatch in the number of boxes between input codes ({rel_codes.shape[-2]}) '
                              f'and input scores ({scores.shape[-2]}).')
