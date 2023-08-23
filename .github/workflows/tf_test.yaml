@@ -3,7 +3,7 @@ name: Run Tensorflow Tests
 on:
   push:
     branches:
-      - ssd
+      - main
     paths-ignore:
       - '**.md'
   pull_request:
@@ -30,7 +30,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install tensorflow==${{matrix.tf_ver}}
-          pip install pytest pytest-mock
+          pip install -r requirements_test.txt
+      - name: Run pre-commit
+        run: |
+          ./install-pre-commit.sh
+          pre-commit run --all
       - name: Run pytest
         run: |
-          pytest custom_layers/keras
+          pytest sony_custom_layers/keras
