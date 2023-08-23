@@ -43,9 +43,6 @@ scores_func = {
 
 class TestSSDPostProcess(CustomOpTesterBase):
 
-    def test_custom_objects(self):
-        self._test_clean_custom_objects(SSDPostProcess.__name__)
-
     @pytest.mark.parametrize('score_conv, remove_bg',
                              [(s, True) for s in list(ScoreConverter)] + [(s.value, False)
                                                                           for s in ScoreConverter])    # as enum or str
@@ -180,8 +177,9 @@ class TestSSDPostProcess(CustomOpTesterBase):
         # check that the model can be loaded from a clean process (not contaminated by previous imports)
         self._test_clean_load_model_with_custom_objects(path)
 
-        from custom_layers.keras import custom_objects
-        model = tf.keras.models.load_model(path, custom_objects=custom_objects)
+        from custom_layers.keras import custom_layers_scope
+        with custom_layers_scope():
+            model = tf.keras.models.load_model(path)
 
         cfg = model.layers[-1].get_config()
         assert len(cfg) == 8

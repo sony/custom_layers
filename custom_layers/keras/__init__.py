@@ -17,4 +17,4 @@
 # trigger custom ops registration
 from . import object_detection
 
-from custom_layers.keras.custom_objects import custom_objects
+from custom_layers.keras.custom_objects import custom_layers_scope
