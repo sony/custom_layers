@@ -19,8 +19,8 @@ from typing import Sequence, Union
 import tensorflow as tf
 import numpy as np
 
-from custom_layers.keras.object_detection.box_utils import corners_to_centroids, centroids_to_corners
-from custom_layers.keras.custom_objects import register_layer
+from sony_custom_layers.keras.object_detection.box_utils import corners_to_centroids, centroids_to_corners
+from sony_custom_layers.keras.custom_objects import register_layer
 
 
 @register_layer

@@ -13,8 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+import os
+import sys
 
-# trigger custom ops registration
-from . import object_detection
 
-from custom_layers.keras.custom_objects import custom_layers_scope
+class CustomOpTesterBase:
+
+    @staticmethod
+    def _test_clean_load_model_with_custom_objects(path):
+        cmd = f"""
+import tensorflow as tf
+from sony_custom_layers.keras import custom_layers_scope
+with custom_layers_scope():
+    tf.keras.models.load_model('{path}')
+"""
+        ret = os.system(f'{sys.executable} -c "{cmd}"')
+        assert ret == 0
+
+    @staticmethod
+    def _test_load_model(path):
+        cmd = f"import tensorflow as tf;" \
+              f"tf.keras.models.load_model('{path}')"
+        ret = os.system(f'{sys.executable} -c "{cmd}"')
+        assert ret == 0

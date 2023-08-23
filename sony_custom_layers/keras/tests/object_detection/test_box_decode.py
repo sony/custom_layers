@@ -18,8 +18,8 @@ import tensorflow as tf
 
 import pytest
 
-from custom_layers.keras.object_detection import FasterRCNNBoxDecode
-from custom_layers.keras.tests.common import CustomOpTesterBase
+from sony_custom_layers.keras.object_detection import FasterRCNNBoxDecode
+from sony_custom_layers.keras.tests.common import CustomOpTesterBase
 
 
 class TestBoxDecode(CustomOpTesterBase):
@@ -38,7 +38,7 @@ class TestBoxDecode(CustomOpTesterBase):
         # check that the model can be loaded from a clean process (not contaminated by previous imports)
         self._test_clean_load_model_with_custom_objects(path)
 
-        from custom_layers.keras import custom_layers_scope
+        from sony_custom_layers.keras import custom_layers_scope
         with custom_layers_scope():
             model = tf.keras.models.load_model(path)
 

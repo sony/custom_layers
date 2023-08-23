@@ -22,10 +22,10 @@ Created on 7/9/23
 @author: irenab
 """
 from setuptools import setup, find_packages
-from custom_layers.version import __version__
+from sony_custom_layers.version import __version__
 
-setup(name='custom_layers',
+setup(name='sony_custom_layers',
       version=__version__,
-      packages=find_packages(include='custom_layers.keras*', exclude=['*tests*']),
+      packages=find_packages(include='sony_custom_layers.keras*', exclude=['*tests*']),
       python_requires='>=3.8,<3.11',
       install_requires=['tensorflow>=2.10,<2.13', 'numpy'])
