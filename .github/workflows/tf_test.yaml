@@ -1,0 +1,40 @@
+name: Run Tensorflow Tests
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  run-tf-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        py_ver: ["3.8", "3.9", "3.10"]
+        tf_ver: ["2.10", "2.11", "2.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Python 3
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{matrix.py_ver}}
+      - name: Install dependencies
+        run: |
+          pip install tensorflow==${{matrix.tf_ver}}
+          pip install -r requirements_test.txt
+      - name: Run pre-commit
+        run: |
+          ./install-pre-commit.sh
+          pre-commit run --all
+      - name: Run pytest
+        run: |
+          pytest sony_custom_layers/keras
