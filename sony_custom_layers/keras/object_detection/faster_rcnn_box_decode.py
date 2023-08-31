@@ -14,7 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from typing import Sequence, Union
+from typing import Sequence, Union, List
 
 import tensorflow as tf
 import numpy as np
@@ -26,8 +26,8 @@ from sony_custom_layers.keras.custom_objects import register_layer
 @register_layer
 class FasterRCNNBoxDecode(tf.keras.layers.Layer):
 
-    def __init__(self, anchors: Union[np.ndarray, tf.Tensor], scale_factors: Sequence[Union[float, int]],
-                 clip_window: Sequence[Union[float, int]], **kwargs):
+    def __init__(self, anchors: Union[np.ndarray, tf.Tensor, List[List[float]]],
+                 scale_factors: Sequence[Union[float, int]], clip_window: Sequence[Union[float, int]], **kwargs):
         """
         Box decoding as per Faster R-CNN (https://arxiv.org/abs/1506.01497).
 
@@ -89,7 +89,7 @@ class FasterRCNNBoxDecode(tf.keras.layers.Layer):
 
     def get_config(self) -> dict:
         return {
-            'anchors': self.anchors.numpy(),
+            'anchors': self.anchors.numpy().tolist(),
             'scale_factors': self.scale_factors,
             'clip_window': self.clip_window,
         }
