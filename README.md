@@ -1,15 +1,11 @@
 # Sony Custom Layers (SCL)
 
-Sony Custom Layers (SCL) is an open-source project implementing NN layers not supported by the TensorFlow Keras API or Torch's torch.nn, but are nevertheless supported by the SDSP converter.
-The aim of this project is to extend the catalog of layers that can be optimally run on the IMX500 to enable better performance for models utilizing the implemented custom layers.
-SCL is developed by researchers and engineers working at Sony Semiconductor Israel.
+Sony Custom Layers (SCL) is an open-source project implementing detection post process NN layers not supported by the TensorFlow Keras API or Torch's torch.nn for the easy integration of those layers into pretrained models.
 
 ## Table of Contents
 
 - [Getting Started](#getting-started)
 - [Implemented Layers](#implemented-layers)
-- [Results](#results)
-- [Contributions](#contributions)
 - [License](#license)
 
 
@@ -31,7 +27,8 @@ Currently, SCL is being tested on a matrix of Python and TensorFlow versions:
 |---------------|------------------------|---------------------------|-------------------|
 | TensorFlow    | 2.10                   | 3.8-3.10                  | .h5               |           
 | TensorFlow    | 2.11                   | 3.8-3.10                  | .h5               |           
-| TensorFlow    | 2.12                   | 3.8-3.10                  | .h5  .keras       |           
+| TensorFlow    | 2.12                   | 3.8-3.11                  | .h5  .keras       |  
+| TensorFlow    | 2.13                   | 3.8-3.11                  | .keras            |  
 
 ## Implemented Layers
 SCL currently includes implementations of the following layers:
@@ -44,15 +41,6 @@ SCL currently includes implementations of the following layers:
 
 ### Torch
 * SCL aims to implement torch layers at a later stage
-
-## Results
-### TensorFlow
-
-## Contributions
-SCL aims at keeping a more up-to-date fork and welcomes contributions from anyone.
-
-*You will find more information about contributions in the [Contribution guide](CONTRIBUTING.md).
-
 
 ## License
 [Apache License 2.0](LICENSE.md).
