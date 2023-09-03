@@ -25,10 +25,10 @@ pip install sony-custom-layers
 Currently, SCL is being tested on a matrix of Python and TensorFlow versions:
 | **Framework** | **Tested FW versions** | **Tested Python version** | **Serialization** |
 |---------------|------------------------|---------------------------|-------------------|
-| TensorFlow    | 2.10                   | 3.8-3.10                  | .h5               |           
-| TensorFlow    | 2.11                   | 3.8-3.10                  | .h5               |           
-| TensorFlow    | 2.12                   | 3.8-3.11                  | .h5  .keras       |  
-| TensorFlow    | 2.13                   | 3.8-3.11                  | .keras            |  
+| TensorFlow    | 2.10                   | 3.8-3.10                  | .h5               |
+| TensorFlow    | 2.11                   | 3.8-3.10                  | .h5               |
+| TensorFlow    | 2.12                   | 3.8-3.11                  | .h5  .keras       |
+| TensorFlow    | 2.13                   | 3.8-3.11                  | .keras            |
 
 ## Implemented Layers
 SCL currently includes implementations of the following layers:
