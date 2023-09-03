@@ -14,7 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Tuple, Union, List
 import dataclasses
 
 import tensorflow as tf
@@ -26,7 +26,7 @@ from sony_custom_layers.keras.custom_objects import register_layer
 
 @dataclasses.dataclass
 class SSDPostProcessCfg:
-    anchors: Union[np.ndarray, tf.Tensor]
+    anchors: Union[np.ndarray, tf.Tensor, List[List[float]]]
     scale_factors: Sequence[Union[float, int]]
     img_size: Sequence[Union[float, int]]
     score_converter: Union[ScoreConverter, str]
@@ -43,7 +43,7 @@ class SSDPostProcessCfg:
 class SSDPostProcess(tf.keras.layers.Layer):
 
     def __init__(self,
-                 anchors: Union[np.ndarray, tf.Tensor],
+                 anchors: Union[np.ndarray, tf.Tensor, List[List[float]]],
                  scale_factors: Sequence[Union[int, float]],
                  img_size: Sequence[Union[int, float]],
                  score_converter: Union[ScoreConverter, str],
@@ -131,4 +131,6 @@ class SSDPostProcess(tf.keras.layers.Layer):
         return outputs
 
     def get_config(self) -> dict:
-        return self._cfg.as_dict()
+        d = self._cfg.as_dict()
+        d['anchors'] = tf.constant(d['anchors']).numpy().tolist()
+        return d

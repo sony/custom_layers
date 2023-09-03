@@ -1,0 +1,95 @@
+name: Run Tensorflow Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-tf-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        py_ver: ["3.8", "3.9", "3.10", "3.11"]
+        tf_ver: ["2.10", "2.11", "2.12", "2.13"]
+        exclude:
+          - py_ver: "3.11"
+            tf_ver: "2.10"
+          - py_ver: "3.11"
+            tf_ver: "2.11"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{matrix.py_ver}}
+      - name: Install dependencies
+        run: |
+          pip install tensorflow==${{matrix.tf_ver}}
+          pip install -r requirements_test.txt
+      - name: Run pre-commit
+        run: |
+          ./install-pre-commit.sh
+          pre-commit run --all
+      - name: Run pytest
+        run: |
+          pytest sony_custom_layers/keras
+  build:
+    runs-on: ubuntu-latest
+    needs: run-tf-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          # head_ref to get src branch from pull request
+          ref: ${{ github.head_ref || github.ref_name }}
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Validate version tag
+        run: |
+          ver=$(python -c "from sony_custom_layers.version import __version__;print(__version__)")
+          if [[ -z $ver ]];then
+            echo ERROR: empty version
+            exit 1
+          fi
+          new_tag=v$ver
+          echo new_tag: $new_tag
+          
+          git pull --tags
+          # if tag exists, returns 0 (and ret doesn't get defined)
+          git rev-parse $new_tag >& /dev/null|| ret=$?
+          if [[ -z $ret ]]; then
+            echo "Error: Git tag $new_tag already exists!"
+            exit 1
+          fi
+          echo "new_tag=${new_tag}" >> $GITHUB_ENV
+      - name: Build wheel
+        run: |
+          pip install build
+          python -m build --wheel
+      - name: Publish and tag
+        if: github.ref == 'refs/heads/main'
+        run: |
+          tag=${{ env.new_tag }}
+          if [[ -z $tag ]];then
+            echo ERROR: empty tag
+            exit 1
+          fi
+          
+          # create the tag before publishing (will fail if somehow the tag already exists)
+          echo Creating git tag $tag
+          git tag $tag
+          
+          pip install twine
+          twine upload dist/*.whl --repository-url ${{ secrets.JFROG_REPO_URL }} \
+                -u ${{ secrets.JFROG_USERNAME }} -p ${{ secrets.JFROG_PASSWORD }}
+          
+          git push origin $tag
+    
