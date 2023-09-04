@@ -36,8 +36,8 @@ SCL currently includes implementations of the following layers:
 
 | **Layer Name** | **Description**                                      | **API documentation**     |
 |-------------------------|---------------------------------------------|---------------------------|
-|  Faster_RCNN_Box_Decode    | Box decoding per [Faster R-CNN](https://arxiv.org/abs/1506.01497) with clipping |  [doc](./sony_custom_layers/keras/object_detection/ssd_pp.md)              |            
-|  SSD_Post_Process    | Post process as described in [SSD: Single Shot MultiBox Detector](https://arxiv.org/abs/1512.02325)  |[doc](./sony_custom_layers/keras/object_detection/faster_rcnn_box_decode.md)                | 
+|  FasterRCNNBoxDecode    | Box decoding per [Faster R-CNN](https://arxiv.org/abs/1506.01497) with clipping |  [doc](./sony_custom_layers/keras/object_detection/ssd_pp.md)              |            
+|  SSDPostProcess    | Post process as described in [SSD: Single Shot MultiBox Detector](https://arxiv.org/abs/1512.02325)  |[doc](./sony_custom_layers/keras/object_detection/faster_rcnn_box_decode.md)                | 
 
 ### Torch
 * SCL aims to implement torch layers at a later stage
