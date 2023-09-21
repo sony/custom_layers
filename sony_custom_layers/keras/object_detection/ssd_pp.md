@@ -9,7 +9,7 @@ from sony_custom_layers.keras.object_detection import SSDPostProcessing, ScoreCo
 
 post_process = SSDPostProcess(anchors=anchors,
                               scale_factors=(10, 10, 5, 5),
-                              img_size=(320, 320),
+                              clip_size=(320, 320),
                               score_converter=ScoreConverter.SIGMOID,
                               score_threshold=0.01,
                               iou_threshold=0.6,
@@ -33,8 +33,8 @@ boxes, scores, labels, n_valid = post_process([encoded_offsets, logits])
         <td>Box decoding scaling factors in the format (y, x, height, width). Type: floats or integers.</td>
     </tr>
     <tr>
-        <td>img_size</td>
-        <td>Image size in the format (height, width). This is used for clipping the decoded boxes. The decoded box coordinates will be clipped to the range y=[0, height] and x=[0, width]. Type: floats or integers.</td>
+        <td>clip_size</td>
+        <td>Clipping size in the format (height, width). The decoded boxes are clipped to the range y=[0, height] and x=[0, width]. Typically, the clipping size is (1, 1) for normalized boxes and the image size for boxes in pixel coordinates. Type: floats or integers.</td>
     </tr>
     <tr>
         <td>score_converter</td>

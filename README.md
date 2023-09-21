@@ -42,6 +42,14 @@ SCL currently includes implementations of the following layers:
 ### Torch
 * SCL aims to implement torch layers at a later stage
 
+## Loading the model
+### TensorFlow
+```
+with sony_custom_layers.keras.custom_layers_scope():
+    model = tf.keras.models.load_model(path)
+```
+See [source](sony_custom_layers/keras/custom_objects.py) for further details.
+
 ## License
 [Apache License 2.0](LICENSE.md).
 
