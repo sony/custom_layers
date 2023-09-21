@@ -28,7 +28,7 @@ from sony_custom_layers.keras.custom_objects import register_layer
 class SSDPostProcessCfg:
     anchors: Union[np.ndarray, tf.Tensor, List[List[float]]]
     scale_factors: Sequence[Union[float, int]]
-    img_size: Sequence[Union[float, int]]
+    clip_size: Sequence[Union[float, int]]
     score_converter: Union[ScoreConverter, str]
     score_threshold: float
     iou_threshold: float
@@ -45,7 +45,7 @@ class SSDPostProcess(tf.keras.layers.Layer):
     def __init__(self,
                  anchors: Union[np.ndarray, tf.Tensor, List[List[float]]],
                  scale_factors: Sequence[Union[int, float]],
-                 img_size: Sequence[Union[int, float]],
+                 clip_size: Sequence[Union[int, float]],
                  score_converter: Union[ScoreConverter, str],
                  score_threshold: float,
                  iou_threshold: float,
@@ -58,26 +58,26 @@ class SSDPostProcess(tf.keras.layers.Layer):
         Args:
             anchors: Anchors with a shape of (n_boxes, 4) in corner coordinates (y_min, x_min, y_max, x_max).
             scale_factors: Box decoding scaling factors in the format (y, x, height, width).
-            img_size: Image size in the format (height, width). This is used for clipping the decoded boxes.
-                      The decoded box coordinates will be clipped to the range y=[0, height] and x=[0, width].
+            clip_size: Clipping size in the format (height, width). The decoded boxes are clipped to the
+                       range y=[0, height] and x=[0, width]. Typically, the clipping size is (1, 1) for normalized boxes
+                       and the image size for boxes in pixel coordinates.
             score_converter: Conversion to apply to the input logits (sigmoid, softmax, or linear).
             score_threshold: Score threshold for non-maximum suppression.
             iou_threshold: Intersection over union threshold for non-maximum suppression.
             max_detections: The number of detections to return.
             remove_background: If True, the first class is removed from the input scores (after the score_converter is
                                applied).
-
         """
         super().__init__(**kwargs)
-        self._cfg = SSDPostProcessCfg(anchors=anchors,
-                                      scale_factors=scale_factors,
-                                      img_size=img_size,
-                                      score_converter=score_converter,
-                                      score_threshold=score_threshold,
-                                      iou_threshold=iou_threshold,
-                                      max_detections=max_detections,
-                                      remove_background=remove_background)
-        self._box_decode = FasterRCNNBoxDecode(anchors, scale_factors, (0, 0, *img_size))
+        self.cfg = SSDPostProcessCfg(anchors=anchors,
+                                     scale_factors=scale_factors,
+                                     clip_size=clip_size,
+                                     score_converter=score_converter,
+                                     score_threshold=score_threshold,
+                                     iou_threshold=iou_threshold,
+                                     max_detections=max_detections,
+                                     remove_background=remove_background)
+        self._box_decode = FasterRCNNBoxDecode(anchors, scale_factors, (0, 0, *clip_size))
 
     def call(self, inputs: Sequence[tf.Tensor], *args, **kwargs) -> Tuple[tf.Tensor]:
         """
@@ -110,10 +110,10 @@ class SSDPostProcess(tf.keras.layers.Layer):
             raise ValueError(f'Mismatch in the number of boxes between input codes ({rel_codes.shape[-2]}) '
                              f'and input scores ({scores.shape[-2]}).')
 
-        if self._cfg.score_converter != ScoreConverter.LINEAR:
-            scores = tf.keras.layers.Activation(self._cfg.score_converter)(scores)
+        if self.cfg.score_converter != ScoreConverter.LINEAR:
+            scores = tf.keras.layers.Activation(self.cfg.score_converter)(scores)
 
-        if self._cfg.remove_background:
+        if self.cfg.remove_background:
             scores = tf.slice(scores, begin=[0, 0, 1], size=[-1, -1, -1])
 
         decoded_boxes = self._box_decode(rel_codes)
@@ -122,15 +122,15 @@ class SSDPostProcess(tf.keras.layers.Layer):
 
         outputs = tf.image.combined_non_max_suppression(decoded_boxes,
                                                         scores,
-                                                        max_output_size_per_class=self._cfg.max_detections,
-                                                        max_total_size=self._cfg.max_detections,
-                                                        iou_threshold=self._cfg.iou_threshold,
-                                                        score_threshold=self._cfg.score_threshold,
+                                                        max_output_size_per_class=self.cfg.max_detections,
+                                                        max_total_size=self.cfg.max_detections,
+                                                        iou_threshold=self.cfg.iou_threshold,
+                                                        score_threshold=self.cfg.score_threshold,
                                                         pad_per_class=False,
                                                         clip_boxes=False)
         return outputs
 
     def get_config(self) -> dict:
-        d = self._cfg.as_dict()
+        d = self.cfg.as_dict()
         d['anchors'] = tf.constant(d['anchors']).numpy().tolist()
         return d

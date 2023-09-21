@@ -65,7 +65,7 @@ class TestSSDPostProcess(CustomOpTesterBase):
 
         post_process = SSDPostProcess(anchors=anchors,
                                       scale_factors=scale_factors,
-                                      img_size=img_size,
+                                      clip_size=img_size,
                                       score_converter=score_conv,
                                       score_threshold=score_thresh,
                                       iou_threshold=iou_thesh,
@@ -130,7 +130,7 @@ class TestSSDPostProcess(CustomOpTesterBase):
         anchors = np.random.uniform(0, 1, size=(n_boxes, 4)).astype(np.float32)
         pp = SSDPostProcess(anchors=anchors,
                             scale_factors=scale_factors,
-                            img_size=img_size,
+                            clip_size=img_size,
                             score_converter=ScoreConverter.LINEAR,
                             score_threshold=score_threshold,
                             iou_threshold=0.1,
@@ -147,14 +147,14 @@ class TestSSDPostProcess(CustomOpTesterBase):
             assert np.array_equal(selected_boxes[0, i, :], boxes[0, ind, :])
 
     @pytest.mark.parametrize(
-        'scale_factors, img_size, n_boxes, n_labels, max_detections, remove_bg',
+        'scale_factors, clip_size, n_boxes, n_labels, max_detections, remove_bg',
         [
             ((1, 2, 3, 4),
              (10., 20.), 200, 10, 100, True),    # int factors, float size, n_boxes * n_labels > max_detections
             ((1.1, 2.1, 3.1, 4.1),
              (0, 1), 15, 10, 200, False),    # float factors, int size, n_boxes * n_labels < max_detections
         ])
-    def test_full_op_model(self, tmp_path, scale_factors, img_size, n_boxes, n_labels, max_detections, remove_bg,
+    def test_full_op_model(self, tmp_path, scale_factors, clip_size, n_boxes, n_labels, max_detections, remove_bg,
                            save_format_ext):
         batch_size = 10
         score_thresh = 0.5
@@ -163,7 +163,7 @@ class TestSSDPostProcess(CustomOpTesterBase):
         anchors = np.random.uniform(0, 1, size=(n_boxes, 4)).astype(np.float32)
         post_process = SSDPostProcess(anchors=anchors,
                                       scale_factors=scale_factors,
-                                      img_size=img_size,
+                                      clip_size=clip_size,
                                       score_converter=score_conv,
                                       score_threshold=score_thresh,
                                       iou_threshold=iou_thresh,
@@ -185,7 +185,7 @@ class TestSSDPostProcess(CustomOpTesterBase):
         assert len(cfg) == 8
         assert np.array_equal(cfg['anchors'], anchors)
         assert tuple(cfg['scale_factors']) == scale_factors
-        assert tuple(cfg['img_size']) == img_size
+        assert tuple(cfg['clip_size']) == clip_size
         assert cfg['score_converter'] == score_conv
         assert cfg['score_threshold'] == score_thresh
         assert cfg['iou_threshold'] == iou_thresh
