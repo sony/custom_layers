@@ -20,6 +20,7 @@ import dataclasses
 import tensorflow as tf
 import numpy as np
 
+from sony_custom_layers.keras.base_custom_layer import CustomLayer
 from sony_custom_layers.keras.object_detection import FasterRCNNBoxDecode, ScoreConverter
 from sony_custom_layers.keras.custom_objects import register_layer
 
@@ -40,7 +41,7 @@ class SSDPostProcessCfg:
 
 
 @register_layer
-class SSDPostProcess(tf.keras.layers.Layer):
+class SSDPostProcess(CustomLayer):
 
     def __init__(self,
                  anchors: Union[np.ndarray, tf.Tensor, List[List[float]]],
@@ -131,6 +132,8 @@ class SSDPostProcess(tf.keras.layers.Layer):
         return outputs
 
     def get_config(self) -> dict:
+        config = super().get_config()
         d = self.cfg.as_dict()
         d['anchors'] = tf.constant(d['anchors']).numpy().tolist()
-        return d
+        config.update(d)
+        return config

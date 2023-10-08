@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+from unittest.mock import patch
+
 import numpy as np
 import tensorflow as tf
-
 import pytest
 
 from sony_custom_layers.keras.object_detection import FasterRCNNBoxDecode
@@ -32,7 +33,9 @@ class TestBoxDecode(CustomOpTesterBase):
         anchors = self._generate_random_anchors(n_anchors=10, seed=1)
         if tf_anchors:
             anchors = tf.constant(anchors)
-        orig_model = self._build_model(anchors, scale_factors, clip_window)
+
+        with patch('sony_custom_layers.keras.custom_layer_base.__version__', 'foo.bar'):
+            orig_model = self._build_model(anchors, scale_factors, clip_window)
         orig_model.save(path)
 
         # check that the model can be loaded from a clean process (not contaminated by previous imports)
@@ -44,10 +47,12 @@ class TestBoxDecode(CustomOpTesterBase):
 
         cfg = model.layers[-1].get_config()
         assert np.array_equal(cfg['anchors'], anchors)
-        assert list(cfg['scale_factors']) == scale_factors
+        assert np.array_equal(cfg['scale_factors'], np.asarray(scale_factors).astype(np.float32))
         assert list(cfg['clip_window']) == clip_window
         # is inferable
         model(np.random.uniform(size=(1, *shape)).astype(np.float32))
+        # version
+        assert model.layers[-1].custom_version == 'foo.bar'
 
     def test_zero_offsets(self):
         n_boxes = 100
