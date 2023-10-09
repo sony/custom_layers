@@ -161,7 +161,7 @@ class TestSSDPostProcess(CustomOpTesterBase):
         iou_thresh = 0.6
         score_conv = ScoreConverter.SIGMOID
         anchors = np.random.uniform(0, 1, size=(n_boxes, 4)).astype(np.float32)
-        with patch('sony_custom_layers.keras.custom_layer_base.__version__', 'foo.bar'):
+        with patch('sony_custom_layers.keras.base_custom_layer.__version__', 'foo.bar'):
             post_process = SSDPostProcess(anchors=anchors,
                                           scale_factors=scale_factors,
                                           clip_size=clip_size,

@@ -34,7 +34,7 @@ class TestBoxDecode(CustomOpTesterBase):
         if tf_anchors:
             anchors = tf.constant(anchors)
 
-        with patch('sony_custom_layers.keras.custom_layer_base.__version__', 'foo.bar'):
+        with patch('sony_custom_layers.keras.base_custom_layer.__version__', 'foo.bar'):
             orig_model = self._build_model(anchors, scale_factors, clip_window)
         orig_model.save(path)
 

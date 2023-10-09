@@ -14,7 +14,6 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-# trigger custom ops registration
-from . import object_detection
+from .object_detection import FasterRCNNBoxDecode, SSDPostProcess, ScoreConverter
 
-from sony_custom_layers.keras.custom_objects import custom_layers_scope
+from .custom_objects import custom_layers_scope
