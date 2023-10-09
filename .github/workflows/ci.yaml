@@ -25,6 +25,8 @@ jobs:
             tf_ver: "2.10"
           - py_ver: "3.11"
             tf_ver: "2.11"
+          - py_ver: "3.8"
+            tf_ver: "2.14"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
