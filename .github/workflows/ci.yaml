@@ -62,19 +62,13 @@ jobs:
             new_version=0.0.0.dev0
           else
             latest_tag_without_v=${latest_tag#v}
-            # Call the Python function bump_version() here to get the new version
             new_version=$(python -c "
           from packaging.version import parse
-          
-          def bump_dev_version(tag):
-              v = parse(tag)
-              if v.is_devrelease:
-                  next_dev_num = v.dev + 1
-                  print(f'{v.major}.{v.minor}.{v.micro}.dev{next_dev_num}')
-              else:
-                  print(f'{v.major}.{v.minor}.{v.micro + 1}.dev0')
-          
-          bump_dev_version('$latest_tag_without_v')
+          v = parse('$latest_tag_without_v')
+          if v.is_devrelease:
+              print(f'{v.major}.{v.minor}.{v.micro}.dev{v.dev + 1}')
+          else:
+              print(f'{v.major}.{v.minor}.{v.micro + 1}.dev0')
           ")
           fi
           echo "new_ver=${new_version}"  >> $GITHUB_ENV
