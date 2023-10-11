@@ -36,6 +36,7 @@ jobs:
         run: |
           pytest sony_custom_layers/keras
   build:
+    needs: [run-tf-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -50,14 +51,62 @@ jobs:
           ./install-pre-commit.sh
           pre-commit run --all
 
+      - name: get new dev tag
+        shell: bash
+        run : |
+          pip install packaging
+          git fetch --tags
+          latest_tag=$(git tag -l | sort -V -r | head -n 1)
+          
+          if [ -z "$latest_tag" ]; then
+            new_version=0.0.0.dev0
+          else
+            latest_tag_without_v=${latest_tag#v}
+            # Call the Python function bump_version() here to get the new version
+            new_version=$(python -c "
+          from packaging.version import parse
+          
+          def bump_dev_version(tag):
+              v = parse(tag)
+              if v.is_devrelease:
+                  next_dev_num = v.dev + 1
+                  print(f'{v.major}.{v.minor}.{v.micro}.dev{next_dev_num}')
+              else:
+                  print(f'{v.major}.{v.minor}.{v.micro + 1}.dev0')
+          
+          bump_dev_version('$latest_tag_without_v')
+          ")
+          fi
+          echo "new_ver=${new_version}"  >> $GITHUB_ENV
+          echo "new_tag=v${new_version}" >> $GITHUB_ENV
+          echo "cat GITHUB_ENV"
+          cat $GITHUB_ENV
+
+      - name: update name and version to dev
+        shell: bash
+        run: |
+          echo "__version__ = '${{ env.new_ver }}'" >  sony_custom_layers/version.py
+          echo "print sony_custom_layers/version.py"
+          cat sony_custom_layers/version.py
+          
+          sed -i 's/name = sony-custom-layers/name = sony-custom-layers-dev/' setup.cfg
+          echo "print setup.cfg"
+          cat setup.cfg
+
       - name: Build wheel
         run: |
           pip install build
           python -m build --wheel
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheel
-          path: dist/*
+      - name: Publish package pypi
+        shell: bash
+        run: |
+          pip install twine
+          echo "event_name is ${{ github.event_name }}"
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            twine upload --repository pypi dist/* -u __token__ -p ${{ secrets.PYPI_API_KEY }}
+            git tag ${{ env.new_tag }}
+            git push origin ${{ env.new_tag }}
+          fi
+         
     
