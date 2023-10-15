@@ -14,6 +14,27 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from .object_detection import FasterRCNNBoxDecode, SSDPostProcess, ScoreConverter
+import abc
 
-from .custom_objects import custom_layers_scope
+import tensorflow as tf
+
+from sony_custom_layers.version import __version__
+
+
+class CustomLayer(tf.keras.layers.Layer, abc.ABC):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.custom_version: str = __version__
+
+    def get_config(self):
+        config = super().get_config()
+        config['custom_version'] = self.custom_version
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        custom_version = config.pop('custom_version')
+        layer = cls(**config)
+        layer.custom_version = custom_version
+        return layer

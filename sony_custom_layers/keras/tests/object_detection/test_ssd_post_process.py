@@ -14,7 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import tensorflow as tf
@@ -78,7 +78,7 @@ class TestSSDPostProcess(CustomOpTesterBase):
         out = post_process([rel_codes, scores])
 
         # verify box decode params and input are set correctly
-        assert post_process._box_decode.scale_factors == scale_factors
+        assert np.array_equal(post_process._box_decode.scale_factors, np.asarray(scale_factors, dtype=np.float32))
         assert np.array_equal(post_process._box_decode.anchors, anchors)
         assert post_process._box_decode.clip_window == (0, 0, *img_size)
         assert np.array_equal(bd_call.call_args[0][0].numpy(), rel_codes)
@@ -161,14 +161,16 @@ class TestSSDPostProcess(CustomOpTesterBase):
         iou_thresh = 0.6
         score_conv = ScoreConverter.SIGMOID
         anchors = np.random.uniform(0, 1, size=(n_boxes, 4)).astype(np.float32)
-        post_process = SSDPostProcess(anchors=anchors,
-                                      scale_factors=scale_factors,
-                                      clip_size=clip_size,
-                                      score_converter=score_conv,
-                                      score_threshold=score_thresh,
-                                      iou_threshold=iou_thresh,
-                                      max_detections=max_detections,
-                                      remove_background=remove_bg)
+        with patch('sony_custom_layers.keras.base_custom_layer.__version__', 'foo.bar'):
+            post_process = SSDPostProcess(anchors=anchors,
+                                          scale_factors=scale_factors,
+                                          clip_size=clip_size,
+                                          score_converter=score_conv,
+                                          score_threshold=score_thresh,
+                                          iou_threshold=iou_thresh,
+                                          max_detections=max_detections,
+                                          remove_background=remove_bg,
+                                          name='pp')
 
         orig_model = self._build_model(post_process, n_boxes, n_labels)
         path = tmp_path / f'model{save_format_ext}'
@@ -181,8 +183,9 @@ class TestSSDPostProcess(CustomOpTesterBase):
         with custom_layers_scope():
             model = tf.keras.models.load_model(path)
 
+        assert model.layers[-1].custom_version == 'foo.bar'
+
         cfg = model.layers[-1].get_config()
-        assert len(cfg) == 8
         assert np.array_equal(cfg['anchors'], anchors)
         assert tuple(cfg['scale_factors']) == scale_factors
         assert tuple(cfg['clip_size']) == clip_size
@@ -191,6 +194,7 @@ class TestSSDPostProcess(CustomOpTesterBase):
         assert cfg['iou_threshold'] == iou_thresh
         assert cfg['max_detections'] == max_detections
         assert cfg['remove_background'] == remove_bg
+        assert cfg['name'] == 'pp'
 
         rel_codes = np.random.uniform(0, 1, size=(batch_size, n_boxes, 4)).astype(np.float32)
         scores = np.random.randn(batch_size, n_boxes, n_labels).astype(np.float32)

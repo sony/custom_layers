@@ -19,12 +19,13 @@ from typing import Sequence, Union, List
 import tensorflow as tf
 import numpy as np
 
+from sony_custom_layers.keras.base_custom_layer import CustomLayer
 from sony_custom_layers.keras.object_detection.box_utils import corners_to_centroids, centroids_to_corners
 from sony_custom_layers.keras.custom_objects import register_layer
 
 
 @register_layer
-class FasterRCNNBoxDecode(tf.keras.layers.Layer):
+class FasterRCNNBoxDecode(CustomLayer):
 
     def __init__(self, anchors: Union[np.ndarray, tf.Tensor, List[List[float]]],
                  scale_factors: Sequence[Union[float, int]], clip_window: Sequence[Union[float, int]], **kwargs):
@@ -47,7 +48,7 @@ class FasterRCNNBoxDecode(tf.keras.layers.Layer):
 
         if len(scale_factors) != 4:
             raise ValueError(f'Invalid scale factors {scale_factors}. Expected 4 values for (y, x, height, width).')
-        self.scale_factors = scale_factors
+        self.scale_factors = tf.constant(scale_factors, dtype=tf.float32)
 
         if len(clip_window) != 4:
             raise ValueError(f'Invalid clip window {clip_window}. Expected 4 values for (y_min, x_min, y_max, x_max).')
@@ -71,7 +72,7 @@ class FasterRCNNBoxDecode(tf.keras.layers.Layer):
             raise ValueError(f'Mismatch in the number of boxes between input tensor ({rel_codes.shape[-2]}) '
                              f'and anchors ({self.anchors.shape[-2]})')
 
-        scaled_codes = rel_codes / tf.constant(self.scale_factors, dtype=rel_codes.dtype)
+        scaled_codes = rel_codes / self.scale_factors
 
         a_y_min, a_x_min, a_y_max, a_x_max = tf.unstack(self.anchors, axis=-1)
         a_y_center, a_x_center, a_h, a_w = corners_to_centroids(a_y_min, a_x_min, a_y_max, a_x_max)
@@ -88,8 +89,10 @@ class FasterRCNNBoxDecode(tf.keras.layers.Layer):
         return boxes
 
     def get_config(self) -> dict:
-        return {
+        config = super().get_config()
+        config.update({
             'anchors': self.anchors.numpy().tolist(),
-            'scale_factors': self.scale_factors,
+            'scale_factors': self.scale_factors.numpy().tolist(),
             'clip_window': self.clip_window,
-        }
+        })
+        return config
