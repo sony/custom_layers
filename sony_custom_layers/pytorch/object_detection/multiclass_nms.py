@@ -18,6 +18,8 @@ from typing import Tuple, NamedTuple
 import torch
 import torchvision.ops
 from torch import Tensor
+from torch.onnx import register_custom_op_symbolic
+from torch.onnx.symbolic_helper import parse_args
 
 
 class NMSResults(NamedTuple):
@@ -78,6 +80,26 @@ def multiclass_nms_op(boxes: torch.Tensor, scores: torch.Tensor, score_threshold
                                score_threshold=score_threshold,
                                iou_threshold=iou_threshold,
                                max_detections=max_detections)
+
+
+@parse_args('v', 'v', 'f', 'f', 'i')
+def multiclass_nms_onnx(g, boxes, scores, score_threshold, iou_threshold, max_detections):
+    outputs = g.op("Sony::MultiClassNMS",
+                   boxes,
+                   scores,
+                   score_threshold_f=score_threshold,
+                   iou_threshold_f=iou_threshold,
+                   max_detections_i=max_detections,
+                   outputs=4)
+    tensor_type = boxes.type()
+    outputs[0].setType(tensor_type.with_sizes([None, max_detections, 4]))
+    outputs[1].setType(tensor_type.with_sizes([None, max_detections]))
+    outputs[2].setType(tensor_type.with_sizes([None, max_detections]))
+    outputs[3].setType(tensor_type.with_sizes([None, 1]))
+    return outputs
+
+
+register_custom_op_symbolic('sony::multiclass_nms', multiclass_nms_onnx, opset_version=1)
 
 
 def multiclass_nms_impl(boxes: Tensor, scores: Tensor, score_threshold: float, iou_threshold: float,

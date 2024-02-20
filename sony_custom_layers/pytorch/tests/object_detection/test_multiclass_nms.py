@@ -16,6 +16,8 @@
 from typing import Optional
 from unittest.mock import Mock
 
+import numpy as np
+import onnx
 import pytest
 import torch
 from torch import Tensor
@@ -141,6 +143,52 @@ class TestMultiClassNMS:
         assert torch.equal(mock.call_args.args[1], scores)
         assert mock.call_args.kwargs == dict(score_threshold=0.1, iou_threshold=0.6, max_detections=5)
         assert ret == mock.return_value
+
+    def test_onnx_export(self, tmpdir_factory):
+        score_thresh = 0.1
+        iou_thresh = 0.6
+        n_boxes = 10
+        n_classes = 5
+        max_dets = 7
+        nms = multiclass_nms.MultiClassNMS(score_threshold=score_thresh,
+                                           iou_threshold=iou_thresh,
+                                           max_detections=max_dets)
+
+        path = str(tmpdir_factory.mktemp('nms').join('nms.onnx'))
+        input_names = ['boxes', 'scores']
+        output_names = ['det_boxes', 'det_scores', 'det_labels', 'valid_dets']
+        torch.onnx.export(nms, (torch.ones(1, n_boxes, 4), torch.ones(1, n_boxes, n_classes)),
+                          f=path,
+                          input_names=input_names,
+                          output_names=output_names,
+                          dynamic_axes={k: {
+                              0: 'batch'
+                          }
+                                        for k in input_names + output_names})
+
+        model = onnx.load(path)
+        opset_info = list(model.opset_import)[1]
+        assert opset_info.domain == 'Sony' and opset_info.version == 1
+
+        nms_node = list(model.graph.node)[0]
+        assert nms_node.domain == 'Sony'
+        assert nms_node.op_type == 'MultiClassNMS'
+        attrs = sorted(nms_node.attribute, key=lambda a: a.name)
+        assert attrs[0].name == 'iou_threshold'
+        np.isclose(attrs[0].f, iou_thresh)
+        assert attrs[1].name == 'max_detections'
+        assert attrs[1].i == max_dets
+        assert attrs[2].name == 'score_threshold'
+        np.isclose(attrs[2].f, score_thresh)
+        assert len(nms_node.input) == 2
+        assert len(nms_node.output) == 4
+        assert [d.dim_value for d in model.graph.input[0].type.tensor_type.shape.dim][1:] == [10, 4]
+        assert [d.dim_value for d in model.graph.input[1].type.tensor_type.shape.dim][1:] == [10, 5]
+        # this tests shape inference that is defined as part of onnx op
+        assert [d.dim_value for d in model.graph.output[0].type.tensor_type.shape.dim][1:] == [max_dets, 4]
+        assert [d.dim_value for d in model.graph.output[1].type.tensor_type.shape.dim][1:] == [max_dets]
+        assert [d.dim_value for d in model.graph.output[2].type.tensor_type.shape.dim][1:] == [max_dets]
+        assert [d.dim_value for d in model.graph.output[3].type.tensor_type.shape.dim][1:] == [1]
 
     @staticmethod
     def _generate_random_inputs(batch: Optional[int], n_boxes, n_classes):
