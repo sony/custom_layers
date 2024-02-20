@@ -16,11 +16,13 @@
 from typing import Optional
 from unittest.mock import Mock
 
-import numpy as np
-import onnx
 import pytest
+import numpy as np
 import torch
 from torch import Tensor
+import onnx
+import onnxruntime as ort
+from onnxruntime_extensions import get_library_path
 
 from sony_custom_layers.pytorch.object_detection import multiclass_nms
 
@@ -144,7 +146,8 @@ class TestMultiClassNMS:
         assert mock.call_args.kwargs == dict(score_threshold=0.1, iou_threshold=0.6, max_detections=5)
         assert ret == mock.return_value
 
-    def test_onnx_export(self, tmpdir_factory):
+    @pytest.mark.parametrize('dynamic_batch', [True, False])
+    def test_onnx_export(self, dynamic_batch, tmpdir_factory):
         score_thresh = 0.1
         iou_thresh = 0.6
         n_boxes = 10
@@ -155,18 +158,10 @@ class TestMultiClassNMS:
                                            max_detections=max_dets)
 
         path = str(tmpdir_factory.mktemp('nms').join('nms.onnx'))
-        input_names = ['boxes', 'scores']
-        output_names = ['det_boxes', 'det_scores', 'det_labels', 'valid_dets']
-        torch.onnx.export(nms, (torch.ones(1, n_boxes, 4), torch.ones(1, n_boxes, n_classes)),
-                          f=path,
-                          input_names=input_names,
-                          output_names=output_names,
-                          dynamic_axes={k: {
-                              0: 'batch'
-                          }
-                                        for k in input_names + output_names})
+        self._export_onnx(nms, n_boxes, n_classes, path, dynamic_batch)
 
         model = onnx.load(path)
+        onnx.checker.check_model(model, full_check=True)
         opset_info = list(model.opset_import)[1]
         assert opset_info.domain == 'Sony' and opset_info.version == 1
 
@@ -186,14 +181,51 @@ class TestMultiClassNMS:
         assert [d.dim_value for d in model.graph.input[1].type.tensor_type.shape.dim][1:] == [10, 5]
         # this tests shape inference that is defined as part of onnx op
         assert [d.dim_value for d in model.graph.output[0].type.tensor_type.shape.dim][1:] == [max_dets, 4]
+        assert model.graph.output[0].type.tensor_type.elem_type == torch.onnx.TensorProtoDataType.FLOAT
         assert [d.dim_value for d in model.graph.output[1].type.tensor_type.shape.dim][1:] == [max_dets]
+        assert model.graph.output[1].type.tensor_type.elem_type == torch.onnx.TensorProtoDataType.FLOAT
         assert [d.dim_value for d in model.graph.output[2].type.tensor_type.shape.dim][1:] == [max_dets]
+        assert model.graph.output[2].type.tensor_type.elem_type == torch.onnx.TensorProtoDataType.INT32
         assert [d.dim_value for d in model.graph.output[3].type.tensor_type.shape.dim][1:] == [1]
+        assert model.graph.output[3].type.tensor_type.elem_type == torch.onnx.TensorProtoDataType.INT32
+
+    @pytest.mark.parametrize('dynamic_batch', [True, False])
+    def test_ort(self, dynamic_batch, tmpdir_factory):
+        nms = multiclass_nms.MultiClassNMS(score_threshold=0.5, iou_threshold=0.3, max_detections=1000)
+        n_boxes = 500
+        n_classes = 20
+        path = str(tmpdir_factory.mktemp('nms').join('nms.onnx'))
+        self._export_onnx(nms, n_boxes, n_classes, path, dynamic_batch)
+
+        batch = 5 if dynamic_batch else 1
+        boxes, scores = self._generate_random_inputs(batch=batch, n_boxes=n_boxes, n_classes=n_classes, seed=42)
+        torch_res = nms(boxes, scores)
+
+        so = ort.SessionOptions()
+        so.register_custom_ops_library(get_library_path())
+        session = ort.InferenceSession(path, so)
+        ort_res = session.run(output_names=None, input_feed={'boxes': boxes.numpy(), 'scores': scores.numpy()})
+        # this is just a sanity test on random data
+        for i in range(len(torch_res)):
+            assert np.allclose(torch_res[i], ort_res[i]), i
 
     @staticmethod
-    def _generate_random_inputs(batch: Optional[int], n_boxes, n_classes):
+    def _generate_random_inputs(batch: Optional[int], n_boxes, n_classes, seed=None):
         boxes_shape = (batch, n_boxes, 4) if batch else (n_boxes, 4)
         scores_shape = (batch, n_boxes, n_classes) if batch else (n_boxes, n_classes)
+        if seed:
+            torch.random.manual_seed(seed)
         boxes = torch.rand(*boxes_shape)
         scores = torch.rand(*scores_shape)
         return boxes, scores
+
+    def _export_onnx(self, nms_model, n_boxes, n_classes, path, dynamic_batch: bool):
+        input_names = ['boxes', 'scores']
+        output_names = ['det_boxes', 'det_scores', 'det_labels', 'valid_dets']
+        kwargs = dict(dynamic_axes={k: {0: 'batch'} for k in input_names + output_names}) if dynamic_batch else {}
+        torch.onnx.export(nms_model,
+                          args=(torch.ones(1, n_boxes, 4), torch.ones(1, n_boxes, n_classes)),
+                          f=path,
+                          input_names=input_names,
+                          output_names=output_names,
+                          **kwargs)

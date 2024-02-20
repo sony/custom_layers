@@ -13,10 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-import warnings
-from .multiclass_nms import MultiClassNMS, NMSResults
-try:
-    from . import ort
-except ImportError as e:
-    warnings.warn(f'Could not register custom ops in onnxruntime op due to {e}. '
-                  f'If you do not intend to execute onnxruntime this can be ignored.')
+from onnxruntime_extensions import onnx_op, PyCustomOpDef
+
+from .multiclass_nms import multiclass_nms_impl
+
+
+@onnx_op(op_type="Sony::MultiClassNMS",
+         inputs=[PyCustomOpDef.dt_float, PyCustomOpDef.dt_float],
+         outputs=[PyCustomOpDef.dt_float, PyCustomOpDef.dt_float, PyCustomOpDef.dt_int32, PyCustomOpDef.dt_int32],
+         attrs={
+             "score_threshold": PyCustomOpDef.dt_float,
+             "iou_threshold": PyCustomOpDef.dt_float,
+             "max_detections": PyCustomOpDef.dt_int64
+         })
+def multiclass_nms_ort(boxes, scores, score_threshold, iou_threshold, max_detections):
+    return multiclass_nms_impl(boxes, scores, score_threshold, iou_threshold, max_detections)

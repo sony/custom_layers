@@ -18,8 +18,6 @@ from typing import Tuple, NamedTuple
 import torch
 import torchvision.ops
 from torch import Tensor
-from torch.onnx import register_custom_op_symbolic
-from torch.onnx.symbolic_helper import parse_args
 
 
 class NMSResults(NamedTuple):
@@ -68,7 +66,7 @@ class MultiClassNMS(torch.nn.Module):
 
 torch.library.define(
     'sony::multiclass_nms',
-    "(Tensor boxes, Tensor scores, float score_threshold, float iou_threshold, int max_detections) -> "
+    "(Tensor boxes, Tensor scores, float score_threshold, float iou_threshold, SymInt max_detections) -> "
     "(Tensor, Tensor, Tensor, Tensor)")
 
 
@@ -82,7 +80,7 @@ def multiclass_nms_op(boxes: torch.Tensor, scores: torch.Tensor, score_threshold
                                max_detections=max_detections)
 
 
-@parse_args('v', 'v', 'f', 'f', 'i')
+@torch.onnx.symbolic_helper.parse_args('v', 'v', 'f', 'f', 'i')
 def multiclass_nms_onnx(g, boxes, scores, score_threshold, iou_threshold, max_detections):
     outputs = g.op("Sony::MultiClassNMS",
                    boxes,
@@ -91,15 +89,19 @@ def multiclass_nms_onnx(g, boxes, scores, score_threshold, iou_threshold, max_de
                    iou_threshold_f=iou_threshold,
                    max_detections_i=max_detections,
                    outputs=4)
-    tensor_type = boxes.type()
-    outputs[0].setType(tensor_type.with_sizes([None, max_detections, 4]))
-    outputs[1].setType(tensor_type.with_sizes([None, max_detections]))
-    outputs[2].setType(tensor_type.with_sizes([None, max_detections]))
-    outputs[3].setType(tensor_type.with_sizes([None, 1]))
+    # Based on examples in https://github.com/microsoft/onnxruntime/blob/main/orttraining/orttraining/python/
+    # training/ortmodule/_custom_op_symbolic_registry.py (see cross_entropy_loss)
+    # This is a hack to set output type that is different from input type. Apparently it cannot cannot be set directly
+    output_int_type = g.op("Cast", boxes, to_i=torch.onnx.TensorProtoDataType.INT32).type()
+    batch = torch.onnx.symbolic_helper._get_tensor_dim_size(boxes, 0)
+    outputs[0].setType(boxes.type().with_sizes([batch, max_detections, 4]))
+    outputs[1].setType(scores.type().with_sizes([batch, max_detections]))
+    outputs[2].setType(output_int_type.with_sizes([batch, max_detections]))
+    outputs[3].setType(output_int_type.with_sizes([batch, 1]))
     return outputs
 
 
-register_custom_op_symbolic('sony::multiclass_nms', multiclass_nms_onnx, opset_version=1)
+torch.onnx.register_custom_op_symbolic('sony::multiclass_nms', multiclass_nms_onnx, opset_version=1)
 
 
 def multiclass_nms_impl(boxes: Tensor, scores: Tensor, score_threshold: float, iou_threshold: float,
@@ -125,6 +127,11 @@ def multiclass_nms_impl(boxes: Tensor, scores: Tensor, score_threshold: float, i
         valid_detections: number of valid detections out of max_detections
     """
 
+    if not isinstance(boxes, Tensor):
+        boxes = Tensor(boxes)
+    if not isinstance(scores, Tensor):
+        scores = Tensor(scores)
+
     _validate_inputs(boxes, scores, batch=True)
     batch = boxes.shape[0]
     res = [
@@ -136,8 +143,8 @@ def multiclass_nms_impl(boxes: Tensor, scores: Tensor, score_threshold: float, i
     ]
     out_boxes = torch.stack([r.boxes for r in res], dim=0)
     out_scores = torch.stack([r.scores for r in res], dim=0)
-    out_labels = torch.stack([r.labels for r in res], dim=0)
-    out_valid_dets = torch.stack([r.valid_detections for r in res], dim=0)
+    out_labels = torch.stack([r.labels for r in res], dim=0).to(torch.int32)
+    out_valid_dets = torch.stack([r.valid_detections for r in res], dim=0).to(torch.int32)
     return NMSResults(boxes=out_boxes, scores=out_scores, labels=out_labels, valid_detections=out_valid_dets)
 
 
@@ -167,10 +174,7 @@ def _image_multiclass_nms(boxes: Tensor, scores: Tensor, score_threshold: float,
     out_labels = torch.zeros(max_detections)
     out_labels[:valid_dets] = labels[idxs]
 
-    return NMSResults(boxes=out_boxes,
-                      scores=out_scores,
-                      labels=out_labels,
-                      valid_detections=Tensor([valid_dets]).to(torch.int64))
+    return NMSResults(boxes=out_boxes, scores=out_scores, labels=out_labels, valid_detections=Tensor([valid_dets]))
 
 
 def _flatten_image_inputs(boxes: Tensor, scores: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
