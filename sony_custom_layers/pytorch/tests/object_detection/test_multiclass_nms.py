@@ -25,6 +25,7 @@ import onnxruntime as ort
 from onnxruntime_extensions import get_library_path
 
 from sony_custom_layers.pytorch.object_detection import multiclass_nms
+from sony_custom_layers.pytorch.tests import common
 
 
 class TestMultiClassNMS:
@@ -209,6 +210,36 @@ class TestMultiClassNMS:
         for i in range(len(torch_res)):
             assert np.allclose(torch_res[i], ort_res[i]), i
 
+    def test_pt2_export(self, tmpdir_factory):
+        nms = multiclass_nms.MultiClassNMS(score_threshold=0.5, iou_threshold=0.3, max_detections=100)
+        prog = torch.export.export(nms, args=(torch.rand(1, 10, 4), torch.rand(1, 10, 5)))
+        nms_node = list(prog.graph.nodes)[2]
+        assert nms_node.target == torch.ops.sony.multiclass_nms.default
+        val = nms_node.meta['val']
+        assert val[0].shape[1:] == (100, 4)
+        assert val[1].shape[1:] == val[2].shape[1:] == (100, )
+        assert val[2].dtype == torch.int32
+        assert val[3].shape[1:] == (1, )
+        assert val[3].dtype == torch.int32
+
+        boxes, scores = self._generate_random_inputs(1, 10, 5)
+        torch_out = nms(boxes, scores)
+        prog_out = prog.module()(boxes, scores)
+        for i in range(len(torch_out)):
+            assert torch.allclose(torch_out[i], prog_out[i]), i
+
+        path = str(tmpdir_factory.mktemp('nms').join('nms.pt2'))
+        torch.export.save(prog, path)
+
+        # check that exported program can be loaded in a clean env
+        code = f"""
+import torch
+import sony_custom_layers.pytorch.object_detection
+prog = torch.export.load('{path}')
+prog.module()(torch.rand(1, 10, 4), torch.rand(1, 10, 5))
+        """
+        common.exec_in_clean_process(code, check=True)
+
     @staticmethod
     def _generate_random_inputs(batch: Optional[int], n_boxes, n_classes, seed=None):
         boxes_shape = (batch, n_boxes, 4) if batch else (n_boxes, 4)
@@ -219,10 +250,12 @@ class TestMultiClassNMS:
         scores = torch.rand(*scores_shape)
         return boxes, scores
 
-    def _export_onnx(self, nms_model, n_boxes, n_classes, path, dynamic_batch: bool):
+    def _export_onnx(self, nms_model, n_boxes, n_classes, path, dynamic_batch: bool, **kwargs):
         input_names = ['boxes', 'scores']
         output_names = ['det_boxes', 'det_scores', 'det_labels', 'valid_dets']
-        kwargs = dict(dynamic_axes={k: {0: 'batch'} for k in input_names + output_names}) if dynamic_batch else {}
+        if dynamic_batch:
+            assert 'dynamic_axes' not in kwargs
+            kwargs.update(dict(dynamic_axes={k: {0: 'batch'} for k in input_names + output_names}))
         torch.onnx.export(nms_model,
                           args=(torch.ones(1, n_boxes, 4), torch.ones(1, n_boxes, n_classes)),
                           f=path,
