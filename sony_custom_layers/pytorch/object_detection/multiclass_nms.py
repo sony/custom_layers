@@ -16,8 +16,10 @@
 from typing import Tuple, NamedTuple
 
 import torch
-import torchvision.ops
 from torch import Tensor
+import torchvision
+
+MULTICLASS_NMS_TORCH_OP = 'sony::multiclass_nms'
 
 
 class NMSResults(NamedTuple):
@@ -49,7 +51,7 @@ class MultiClassNMS(torch.nn.Module):
 
     def forward(self, boxes: Tensor, scores: Tensor):
         """
-       Args:
+        Args:
             boxes: input boxes of shape [batch, n_boxes, 4] in corner coordinates (y_min, x_min, y_max, x_max)
             scores: input scores of shape [batch, n_boxes, n_classes]
 
@@ -65,14 +67,15 @@ class MultiClassNMS(torch.nn.Module):
 
 
 torch.library.define(
-    'sony::multiclass_nms',
+    MULTICLASS_NMS_TORCH_OP,
     "(Tensor boxes, Tensor scores, float score_threshold, float iou_threshold, SymInt max_detections) -> "
     "(Tensor, Tensor, Tensor, Tensor)")
 
 
-@torch.library.impl('sony::multiclass_nms', 'default')
+@torch.library.impl(MULTICLASS_NMS_TORCH_OP, 'default')
 def multiclass_nms_op(boxes: torch.Tensor, scores: torch.Tensor, score_threshold: float, iou_threshold: float,
                       max_detections: int) -> NMSResults:
+    """ Registers the torch op as torch.ops.sony.multiclass_nms """
     return multiclass_nms_impl(boxes,
                                scores,
                                score_threshold=score_threshold,
@@ -80,28 +83,19 @@ def multiclass_nms_op(boxes: torch.Tensor, scores: torch.Tensor, score_threshold
                                max_detections=max_detections)
 
 
-@torch.onnx.symbolic_helper.parse_args('v', 'v', 'f', 'f', 'i')
-def multiclass_nms_onnx(g, boxes, scores, score_threshold, iou_threshold, max_detections):
-    outputs = g.op("Sony::MultiClassNMS",
-                   boxes,
-                   scores,
-                   score_threshold_f=score_threshold,
-                   iou_threshold_f=iou_threshold,
-                   max_detections_i=max_detections,
-                   outputs=4)
-    # Based on examples in https://github.com/microsoft/onnxruntime/blob/main/orttraining/orttraining/python/
-    # training/ortmodule/_custom_op_symbolic_registry.py (see cross_entropy_loss)
-    # This is a hack to set output type that is different from input type. Apparently it cannot cannot be set directly
-    output_int_type = g.op("Cast", boxes, to_i=torch.onnx.TensorProtoDataType.INT32).type()
-    batch = torch.onnx.symbolic_helper._get_tensor_dim_size(boxes, 0)
-    outputs[0].setType(boxes.type().with_sizes([batch, max_detections, 4]))
-    outputs[1].setType(scores.type().with_sizes([batch, max_detections]))
-    outputs[2].setType(output_int_type.with_sizes([batch, max_detections]))
-    outputs[3].setType(output_int_type.with_sizes([batch, 1]))
-    return outputs
-
-
-torch.onnx.register_custom_op_symbolic('sony::multiclass_nms', multiclass_nms_onnx, opset_version=1)
+@torch.library.impl_abstract(MULTICLASS_NMS_TORCH_OP)
+def multiclass_nms_meta(boxes: torch.Tensor, scores: torch.Tensor, score_threshold: float, iou_threshold: float,
+                        max_detections: int):
+    """ Registers torch op's abstract implementation. It specifies the properties of the output tensors.
+        Needed for torch.export """
+    ctx = torch.library.get_ctx()
+    batch = ctx.new_dynamic_size()
+    return (
+        torch.empty((batch, max_detections, 4)),
+        torch.empty((batch, max_detections)),
+        torch.empty((batch, max_detections), dtype=torch.int32),
+        torch.empty((batch, 1), dtype=torch.int32)
+    )    # yapf: disable
 
 
 def multiclass_nms_impl(boxes: Tensor, scores: Tensor, score_threshold: float, iou_threshold: float,

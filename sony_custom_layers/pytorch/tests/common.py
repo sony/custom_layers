@@ -13,18 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from onnxruntime_extensions import onnx_op, PyCustomOpDef
+import subprocess as sp
+import sys
 
-from .multiclass_nms import multiclass_nms_impl
+
+def get_git_repo_root():
+    p = sp.run(['git', 'rev-parse', '--show-toplevel'], stdout=sp.PIPE, check=True, text=True)
+    return p.stdout.strip()
 
 
-@onnx_op(op_type="Sony::MultiClassNMS",
-         inputs=[PyCustomOpDef.dt_float, PyCustomOpDef.dt_float],
-         outputs=[PyCustomOpDef.dt_float, PyCustomOpDef.dt_float, PyCustomOpDef.dt_int32, PyCustomOpDef.dt_int32],
-         attrs={
-             "score_threshold": PyCustomOpDef.dt_float,
-             "iou_threshold": PyCustomOpDef.dt_float,
-             "max_detections": PyCustomOpDef.dt_int64
-         })
-def multiclass_nms_ort(boxes, scores, score_threshold, iou_threshold, max_detections):
-    return multiclass_nms_impl(boxes, scores, score_threshold, iou_threshold, max_detections)
+def exec_in_clean_process(code: str, check: bool):
+    gitroot = get_git_repo_root()
+    command = f'{sys.executable} -c "{code}"'
+    p = sp.run(command, shell=True, check=check, stdout=sp.PIPE, stderr=sp.PIPE, env={'PYTHONPATH': gitroot})
+    return p

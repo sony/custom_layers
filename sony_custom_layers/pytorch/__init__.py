@@ -13,13 +13,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-import warnings
-from .multiclass_nms import MultiClassNMS, NMSResults
-from . import multiclass_nms_onnx
-
-try:
-    # this just should be called for registration to happen
-    from . import multiclass_nms_ort
-except ImportError as e:
-    warnings.warn(f'Could not register custom ops in onnxruntime op due to {e}. '
-                  f'If you do not intend to execute onnxruntime this can be ignored.')
