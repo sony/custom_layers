@@ -26,7 +26,7 @@ from setuptools import setup
 from sony_custom_layers import requirements
 
 extras_require = {
-    'torch': requirements['torch'] + requirements['ort'],
+    'torch': requirements['torch'] + requirements['torch_ort'],
     'tf': requirements['tf'],
 }
 
