@@ -13,3 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+from sony_custom_layers.import_util import check_pip_requirement
+
+requirements = ['torch~=2.2.0', 'torchvision~=0.17.0']
+
+for req in requirements:
+    check_pip_requirement(req)
+
+from .object_detection.multiclass_nms import MultiClassNMS, NMSResults    # noqa: E402

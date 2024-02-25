@@ -18,8 +18,8 @@ from .multiclass_nms import MultiClassNMS, NMSResults
 from . import multiclass_nms_onnx
 
 try:
-    # this just should be called for registration to happen
+    # import to trigger registration
     from . import multiclass_nms_ort
 except ImportError as e:
-    warnings.warn(f'Could not register custom ops in onnxruntime op due to {e}. '
+    warnings.warn(f'Could not register custom op for onnxruntime due to {e}. '
                   f'If you do not intend to execute onnxruntime this can be ignored.')
