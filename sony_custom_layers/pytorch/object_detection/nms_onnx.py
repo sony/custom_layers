@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------------
 import torch
 
-from .multiclass_nms import MULTICLASS_NMS_TORCH_OP
+from .nms import MULTICLASS_NMS_TORCH_OP
 
 MULTICLASS_NMS_ONNX_OP = "Sony::MultiClassNMS"
 

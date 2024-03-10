@@ -13,9 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+from onnxruntime_extensions import onnx_op, PyCustomOpDef
 
-from .nms import multiclass_nms
-# trigger onnx op registration
-from . import nms_onnx
+from .nms import _multiclass_nms_impl
+from .nms_onnx import MULTICLASS_NMS_ONNX_OP
 
-__all__ = ['multiclass_nms']
+
+@onnx_op(op_type=MULTICLASS_NMS_ONNX_OP,
+         inputs=[PyCustomOpDef.dt_float, PyCustomOpDef.dt_float],
+         outputs=[PyCustomOpDef.dt_float, PyCustomOpDef.dt_float, PyCustomOpDef.dt_int32, PyCustomOpDef.dt_int32],
+         attrs={
+             "score_threshold": PyCustomOpDef.dt_float,
+             "iou_threshold": PyCustomOpDef.dt_float,
+             "max_detections": PyCustomOpDef.dt_int64,
+         })
+def multiclass_nms_ort(boxes, scores, score_threshold, iou_threshold, max_detections):
+    return _multiclass_nms_impl(boxes, scores, score_threshold, iou_threshold, max_detections)

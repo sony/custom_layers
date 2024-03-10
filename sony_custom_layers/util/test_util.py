@@ -13,9 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+import subprocess as sp
+import sys
 
-from .nms import multiclass_nms
-# trigger onnx op registration
-from . import nms_onnx
 
-__all__ = ['multiclass_nms']
+def exec_in_clean_process(code: str, check: bool):
+    # run in new process not contaminated be previous imports
+    command = [sys.executable, '-c', code]
+    p = sp.run(command, shell=False, check=False, capture_output=True, text=True)
+    if check:
+        assert p.returncode == 0, f'\nSTDERR:\n{p.stderr}\nSTDOUT:\n{p.stdout}'
+    return p

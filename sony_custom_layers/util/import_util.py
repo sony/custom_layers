@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+from typing import List
+
 from packaging.requirements import Requirement
 from packaging.version import parse
 from importlib import metadata
@@ -26,7 +28,7 @@ class PackageNotFound(Exception):
     pass
 
 
-def check_pip_requirement(requirement_string: str):
+def check_pip_requirements(requirement_strings: List[str]):
     """
     Check if the package is installed and meets the pip-style requirement string.
 
@@ -36,11 +38,15 @@ def check_pip_requirement(requirement_string: str):
     Raises:
         if the package is not installed or doesn't meet the requirement
     """
-    requirement = Requirement(requirement_string)
-    try:
-        installed_ver = metadata.version(requirement.name)
-    except metadata.PackageNotFoundError:
-        raise PackageNotFound(requirement.name)
+    error = ''
+    for req_str in requirement_strings:
+        requirement = Requirement(req_str)
+        try:
+            installed_ver = metadata.version(requirement.name)
+        except metadata.PackageNotFoundError:
+            error += f'\nRequired package {req_str} is not installed'
 
-    if parse(installed_ver) not in requirement.specifier:
-        raise InstalledVersionMismatch(f'Required {requirement_string}, installed version {installed_ver}')
+        if parse(installed_ver) not in requirement.specifier:
+            error += f'\nRequired {req_str}, installed version {installed_ver}'
+    if error:
+        raise RuntimeError(error)
