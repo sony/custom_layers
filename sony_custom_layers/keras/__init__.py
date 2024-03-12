@@ -13,15 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from packaging.version import parse
 
-try:
-    import tensorflow
-    if not parse('2.10') <= parse(tensorflow.__version__) < parse('2.16'):
-        raise RuntimeError(f'Found unsupported TensorFlow version {tensorflow.__version__}.'
-                           f'Supported versions >=2.10,<2.16')
-except ImportError:
-    raise RuntimeError('TensorFlow package not found, please install it. Supported versions >=2.10,<2.16')
+from sony_custom_layers.util.import_util import check_pip_requirements
+from sony_custom_layers import requirements
 
-from .object_detection import FasterRCNNBoxDecode, SSDPostProcess, ScoreConverter
-from .custom_objects import custom_layers_scope
+check_pip_requirements(requirements['tf'])
+
+from .object_detection import FasterRCNNBoxDecode, SSDPostProcess, ScoreConverter    # noqa: E402
+from .custom_objects import custom_layers_scope    # noqa: E402

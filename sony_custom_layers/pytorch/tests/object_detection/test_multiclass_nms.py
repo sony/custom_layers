@@ -24,7 +24,7 @@ import onnx
 import onnxruntime as ort
 
 from sony_custom_layers.pytorch.object_detection import nms
-from sony_custom_layers.pytorch import load_ort_custom_ops
+from sony_custom_layers.pytorch import load_custom_ops
 from sony_custom_layers.util.test_util import exec_in_clean_process
 
 
@@ -243,7 +243,7 @@ class TestMultiClassNMS:
         boxes, scores = self._generate_random_inputs(batch=batch, n_boxes=n_boxes, n_classes=n_classes, seed=42)
         torch_res = model(boxes, scores)
 
-        so = load_ort_custom_ops()
+        so = load_custom_ops(load_ort=True)
         session = ort.InferenceSession(path, so)
         ort_res = session.run(output_names=None, input_feed={'boxes': boxes.numpy(), 'scores': scores.numpy()})
         # this is just a sanity test on random data

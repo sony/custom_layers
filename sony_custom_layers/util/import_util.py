@@ -20,33 +20,30 @@ from packaging.version import parse
 from importlib import metadata
 
 
-class InstalledVersionMismatch(Exception):
+class RequirementError(Exception):
     pass
 
 
-class PackageNotFound(Exception):
-    pass
-
-
-def check_pip_requirements(requirement_strings: List[str]):
+def check_pip_requirements(requirements: List[str]):
     """
-    Check if the package is installed and meets the pip-style requirement string.
+    Check if all requirements are installed and meet the version specifications.
 
     Args:
-        requirement_string: pip-style requirement string
+        requirements: a list of pip-style requirement strings
 
     Raises:
-        if the package is not installed or doesn't meet the requirement
+        RequirementError if any required package is not installed or doesn't meet the version specification
     """
     error = ''
-    for req_str in requirement_strings:
-        requirement = Requirement(req_str)
+    for req_str in requirements:
+        req = Requirement(req_str)
         try:
-            installed_ver = metadata.version(requirement.name)
+            installed_ver = metadata.version(req.name)
         except metadata.PackageNotFoundError:
             error += f'\nRequired package {req_str} is not installed'
+            continue
 
-        if parse(installed_ver) not in requirement.specifier:
+        if parse(installed_ver) not in req.specifier:
             error += f'\nRequired {req_str}, installed version {installed_ver}'
     if error:
-        raise RuntimeError(error)
+        raise RequirementError(error)
