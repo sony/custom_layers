@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         py_ver: ["3.8", "3.9", "3.10", "3.11"]
-        tf_ver: ["2.10", "2.11", "2.12", "2.13", "2.14", "2.15"]
+        tf_ver: ["2.10", "2.11", "2.12", "2.13", "2.14", "2.15", "2.16"]
         exclude:
           - py_ver: "3.11"
             tf_ver: "2.10"
@@ -29,6 +29,13 @@ jobs:
             tf_ver: "2.14"
           - py_ver: "3.8"
             tf_ver: "2.15"
+          - py_ver: "3.8"
+            tf_ver: "2.16"
+        include:
+          - py_ver: "3.12"
+            tf_ver: "2.16"
+
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -38,7 +45,7 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          pip install tensorflow==${{matrix.tf_ver}}
+          pip install tensorflow==${{matrix.tf_ver}}.*
           pip install -r requirements_test.txt
       - name: Run pytest
         run: |

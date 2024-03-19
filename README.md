@@ -32,6 +32,7 @@ Currently, SCL is being tested on a matrix of Python and TensorFlow versions:
 | TensorFlow    | 2.13                   | 3.8-3.11                  | .keras            |
 | TensorFlow    | 2.14                   | 3.9-3.11                  | .keras            |
 | TensorFlow    | 2.15                   | 3.9-3.11                  | .keras            |
+| TensorFlow    | 2.16                   | 3.9-3.12                  | .keras            |
 
 ## Implemented Layers
 SCL currently includes implementations of the following layers:
