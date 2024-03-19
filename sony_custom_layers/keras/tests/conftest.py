@@ -17,7 +17,9 @@ import pytest
 import tensorflow as tf
 from packaging.version import parse
 
-ext = ['']    # tf format
+ext = []    # tf format
+if parse(tf.version.VERSION) < parse("2.16"):
+    ext.append('')
 if parse(tf.version.VERSION) < parse("2.13"):
     ext.append('.h5')
 if parse(tf.version.VERSION) >= parse("2.12"):
