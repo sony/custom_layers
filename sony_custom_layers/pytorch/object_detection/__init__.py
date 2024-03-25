@@ -14,8 +14,8 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from .nms import multiclass_nms
+from .nms import multiclass_nms, NMSResults
 # trigger onnx op registration
 from . import nms_onnx
 
-__all__ = ['multiclass_nms']
+__all__ = ['multiclass_nms', 'NMSResults']

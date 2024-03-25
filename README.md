@@ -78,7 +78,7 @@ import onnxruntime as ort
 from sony_custom_layers.pytorch import load_custom_ops
 
 so = load_custom_ops(load_ort=True)
-session = ort.InferenceSession(model_path, so)
+session = ort.InferenceSession(model_path, sess_options=so)
 session.run(...)
 ```
 Alternatively, you can pass your own SessionOptions object upon which to register the custom ops

@@ -21,11 +21,11 @@ from sony_custom_layers import requirements
 if TYPE_CHECKING:
     import onnxruntime as ort
 
-__all__ = ['multiclass_nms', 'load_custom_ops']
+__all__ = ['multiclass_nms', 'NMSResults', 'load_custom_ops']
 
 check_pip_requirements(requirements['torch'])
 
-from .object_detection import multiclass_nms    # noqa: E402
+from .object_detection import multiclass_nms, NMSResults    # noqa: E402
 
 
 def load_custom_ops(load_ort: bool = False,
@@ -41,7 +41,7 @@ def load_custom_ops(load_ort: bool = False,
     Usage:
         # for onnxruntime
         so = load_custom_ops(load_ort=True)
-        session = ort.InferenceSession(model_path, so)
+        session = ort.InferenceSession(model_path, sess_options=so)
         session.run(...)
 
     Args:

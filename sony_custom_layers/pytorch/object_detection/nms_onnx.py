@@ -29,6 +29,7 @@ def multiclass_nms_onnx(g, boxes, scores, score_threshold, iou_threshold, max_de
                    iou_threshold_f=iou_threshold,
                    max_detections_i=max_detections,
                    outputs=4)
+    # Set output tensors shape and dtype
     # Based on examples in https://github.com/microsoft/onnxruntime/blob/main/orttraining/orttraining/python/
     # training/ortmodule/_custom_op_symbolic_registry.py (see cross_entropy_loss)
     # This is a hack to set output type that is different from input type. Apparently it cannot be set directly

@@ -12,7 +12,8 @@ from sony_custom_layers.pytorch import multiclass_nms
 multiclass_nms(boxes: Tensor, scores: Tensor, score_threshold: float, iou_threshold: float, max_detections: int)
 ```
 <p><strong>Arguments:</strong></p>
-<ul><strong>boxes</strong> (Tensor) Input boxes with shape [batch, n_boxes, 4], specified in corner coordinates (y_min, x_min, y_max, x_max).</ul>
+<ul><strong>boxes</strong> (Tensor) Input boxes with shape [batch, n_boxes, 4], specified in corner coordinates (x_min, y_min, x_max, y_max). 
+Agnostic to the x-y axes order.</ul>
 <ul><strong>scores</strong> (Tensor) Input scores with shape [batch, n_boxes, n_classes].</ul>
 <ul><strong>score_threshold</strong> (float) The score threshold. Candidates with scores below the threshold are discarded.</ul>
 <ul><strong>iou_threshold</strong> (float) The Intersection Over Union (IOU) threshold for boxes overlap.</ul>
@@ -23,7 +24,7 @@ multiclass_nms(boxes: Tensor, scores: Tensor, score_threshold: float, iou_thresh
         <ul><strong>boxes</strong> (Tensor): The selected boxes with shape [batch, max_detections, 4]</ul>
         <ul><strong>scores</strong> (Tensor): The corresponding scores in descending order with shape [batch, max_detections]</ul>
         <ul><strong>labels</strong> (Tensor): The labels for each box with shape [batch, max_detections]</ul>
-        <ul><strong>n_valid</strong> (Tensor): The number of valid detections out of 'max_detections' with shape [batch]</ul>
+        <ul><strong>n_valid</strong> (Tensor): The number of valid detections out of 'max_detections' with shape [batch, 1]</ul>
 </ul>
 <p><strong>Raises:</strong></p>
 <ul>ValueError: Invalid arguments are passed or input tensors with unexpected shape are received.</ul>

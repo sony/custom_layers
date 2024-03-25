@@ -134,7 +134,7 @@ class TestMultiClassNMS:
         # that outputs are combined correctly
         img_nms_ret = torch.rand(3, max_dets, 6)
         img_nms_ret[..., 5] = torch.randint(0, 10, (3, max_dets), dtype=torch.float32)
-        ret_valid_dets = Tensor([5, 4, 3])
+        ret_valid_dets = Tensor([[5], [4], [3]])
         # each time the function is called, next value in the list returned
         images_ret = [(img_nms_ret[i], ret_valid_dets[i]) for i in range(3)]
         mock = mocker.patch('sony_custom_layers.pytorch.object_detection.nms._image_multiclass_nms',
@@ -242,13 +242,24 @@ class TestMultiClassNMS:
         batch = 5 if dynamic_batch else 1
         boxes, scores = self._generate_random_inputs(batch=batch, n_boxes=n_boxes, n_classes=n_classes, seed=42)
         torch_res = model(boxes, scores)
-
         so = load_custom_ops(load_ort=True)
-        session = ort.InferenceSession(path, so)
+        session = ort.InferenceSession(path, sess_options=so)
         ort_res = session.run(output_names=None, input_feed={'boxes': boxes.numpy(), 'scores': scores.numpy()})
         # this is just a sanity test on random data
         for i in range(len(torch_res)):
             assert np.allclose(torch_res[i], ort_res[i]), i
+        # run in a new process
+        code = f"""
+import onnxruntime as ort
+import numpy as np
+from sony_custom_layers.pytorch import load_custom_ops
+so = load_custom_ops(load_ort=True)
+session = ort.InferenceSession('{path}', so)
+boxes = np.random.rand({batch}, {n_boxes}, 4).astype(np.float32)
+scores = np.random.rand({batch}, {n_boxes}, {n_classes}).astype(np.float32)
+ort_res = session.run(output_names=None, input_feed={{'boxes': boxes, 'scores': scores}})
+        """
+        exec_in_clean_process(code, check=True)
 
     def test_pt2_export(self, tmpdir_factory):
 
@@ -262,7 +273,7 @@ class TestMultiClassNMS:
         assert val[0].shape[1:] == (100, 4)
         assert val[1].shape[1:] == val[2].shape[1:] == (100, )
         assert val[2].dtype == torch.int64
-        assert val[3].shape[1:] == ()
+        assert val[3].shape[1:] == (1, )
         assert val[3].dtype == torch.int64
 
         boxes, scores = self._generate_random_inputs(1, 10, 5)
@@ -278,10 +289,7 @@ class TestMultiClassNMS:
 import torch
 import sony_custom_layers.pytorch
 prog = torch.export.load('{path}')
-boxes = torch.rand(1, 10, 4)
-boxes[..., 0], boxes[..., 2] = torch.aminmax(boxes[..., (0, 2)], dim=-1)
-boxes[..., 1], boxes[..., 3] = torch.aminmax(boxes[..., (1, 3)], dim=-1)
-prog.module()(boxes, torch.rand(1, 10, 5))
+prog.module()(torch.rand(1, 10, 4), torch.rand(1, 10, 5))
         """
         exec_in_clean_process(code, check=True)
 

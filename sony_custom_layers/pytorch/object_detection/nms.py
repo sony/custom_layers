@@ -22,7 +22,7 @@ import torchvision    # noqa: F401 # needed for torch.ops.torchvision
 
 MULTICLASS_NMS_TORCH_OP = 'sony::multiclass_nms'
 
-__all__ = ['multiclass_nms']
+__all__ = ['multiclass_nms', 'NMSResults']
 
 
 class NMSResults(NamedTuple):
@@ -41,7 +41,7 @@ def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, 
 
     Args:
         boxes (Tensor): Input boxes with shape [batch, n_boxes, 4], specified in corner coordinates
-                        (y_min, x_min, y_max, x_max).
+                        (x_min, y_min, x_max, y_max). Agnostic to the x-y axes order.
         scores (Tensor): Input scores with shape [batch, n_boxes, n_classes].
         score_threshold (float): The score threshold. Candidates with scores below the threshold are discarded.
         iou_threshold (float): The Intersection Over Union (IOU) threshold for boxes overlap.
@@ -52,15 +52,15 @@ def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, 
             boxes (Tensor): The selected boxes with shape [batch, max_detections, 4].
             scores (Tensor): The corresponding scores in descending order with shape [batch, max_detections].
             labels (Tensor): The labels for each box with shape [batch, max_detections].
-            n_valid (Tensor): The number of valid detections out of 'max_detections' with shape [batch]
+            n_valid (Tensor): The number of valid detections out of 'max_detections' with shape [batch, 1]
     """
     return NMSResults(*torch.ops.sony.multiclass_nms(boxes, scores, score_threshold, iou_threshold, max_detections))
 
 
 torch.library.define(
     MULTICLASS_NMS_TORCH_OP,
-    "(Tensor boxes, Tensor scores, float score_threshold, float iou_threshold, SymInt max_detections)"
-    " -> (Tensor, Tensor, Tensor, Tensor)")
+    "(Tensor boxes, Tensor scores, float score_threshold, float iou_threshold, SymInt max_detections) -> "
+    "(Tensor, Tensor, Tensor, Tensor)")
 
 
 @torch.library.impl(MULTICLASS_NMS_TORCH_OP, 'default')
@@ -85,20 +85,13 @@ def _multiclass_nms_meta(boxes: torch.Tensor, scores: torch.Tensor, score_thresh
         torch.empty((batch, max_detections, 4)),
         torch.empty((batch, max_detections)),
         torch.empty((batch, max_detections), dtype=torch.int64),
-        torch.empty((batch,), dtype=torch.int64)
+        torch.empty((batch, 1), dtype=torch.int64)
     )    # yapf: disable
 
 
-def _multiclass_nms_impl(boxes: Union[Tensor, np.ndarray],
-                         scores: Union[Tensor, np.ndarray],
-                         score_threshold: float,
-                         iou_threshold: float,
-                         max_detections: int,
-                         full_validation=False) -> NMSResults:
-    """
-    See multiclass_nms
-    full_validation: by default inputs shapes are validated. If True boxes snd scores values are also validated.
-    """
+def _multiclass_nms_impl(boxes: Union[Tensor, np.ndarray], scores: Union[Tensor, np.ndarray], score_threshold: float,
+                         iou_threshold: float, max_detections: int) -> NMSResults:
+    """ See multiclass_nms """
     # this is needed for onnxruntime implementation
     if not isinstance(boxes, Tensor):
         boxes = Tensor(boxes)
@@ -111,11 +104,18 @@ def _multiclass_nms_impl(boxes: Union[Tensor, np.ndarray],
         raise ValueError(f'Invalid iou_threshold {iou_threshold} not in range [0, 1]')
     if max_detections <= 0:
         raise ValueError(f'Invalid non-positive max_detections {max_detections}')
-    _validate_inputs(boxes, scores, batch=True, full=full_validation)
+
+    if boxes.ndim != 3 or boxes.shape[-1] != 4:
+        raise ValueError(f'Invalid input boxes shape {boxes.shape}. Expected shape (batch, n_boxes, 4).')
+    if scores.ndim != 3:
+        raise ValueError(f'Invalid input scores shape {scores.shape}. Expected shape (batch, n_boxes, n_classes).')
+    if boxes.shape[-2] != scores.shape[-2]:
+        raise ValueError(f'Mismatch in the number of boxes between input boxes ({boxes.shape[-2]}) '
+                         f'and scores ({scores.shape[-2]})')
 
     batch = boxes.shape[0]
     res = torch.zeros((batch, max_detections, 6), device=boxes.device)
-    valid_dets = torch.zeros((batch, ), device=boxes.device)
+    valid_dets = torch.zeros((batch, 1), device=boxes.device)
     for i in range(batch):
         res[i], valid_dets[i] = _image_multiclass_nms(boxes[i],
                                                       scores[i],
@@ -146,7 +146,6 @@ def _image_multiclass_nms(boxes: Tensor, scores: Tensor, score_threshold: float,
         out[:, 4] and out[:, 5] contain the scores and labels for the selected boxes
 
     """
-    _validate_inputs(boxes, scores, batch=False, full=False)
     x = _convert_inputs(boxes, scores, score_threshold)
     idxs = _nms_with_class_offsets(x, iou_threshold=iou_threshold)
     idxs = idxs[:max_detections]
@@ -194,34 +193,3 @@ def _nms_with_class_offsets(x: Tensor, iou_threshold: float) -> Tensor:
     offsets = x[:, 5:] * (x[:, :4].max() + 1)
     shifted_boxes = x[:, :4] + offsets
     return torch.ops.torchvision.nms(shifted_boxes, x[:, 4], iou_threshold)
-
-
-def _validate_inputs(boxes: Tensor, scores: Tensor, batch: bool, full: bool):
-    """
-    Validates input boxes and scores shapes and values
-    Args:
-        boxes: expected shape [batch, n_boxes, 4] if batch is True or [n_boxes, 4] otherwise
-               expected coordinates (xmin, ymin, xmax, ymax), such that xmin <= xmax, ymin <= ymax
-        scores: expected shape [batch, n_boxes, n_classes] if batch is True or [n_boxes, n_classes] otherwise,
-                expected values in range [0, 1]
-        batch: whether the inputs are expected to contain the batch dims
-        full: if False, only validates inputs shapes. If True, also validates boxes and scores values.
-
-    Raises:
-        ValueError with appropriate error
-    """
-    exp_ndims = 2 + int(batch)
-    if boxes.ndim != exp_ndims or boxes.shape[-1] != 4:
-        raise ValueError(f'Invalid input boxes shape {boxes.shape}. '
-                         f'Expected shape ({"batch, " if batch else ""}n_boxes, 4).')
-    if scores.ndim != exp_ndims:
-        raise ValueError(f'Invalid input scores shape {scores.shape}. '
-                         f'Expected shape ({"batch, " if batch else ""}n_boxes, n_classes).')
-    if boxes.shape[-2] != scores.shape[-2]:
-        raise ValueError(f'Mismatch in the number of boxes between input boxes ({boxes.shape[-2]}) '
-                         f'and scores ({scores.shape[-2]})')
-    if full:
-        if torch.any(boxes[..., 0] > boxes[..., 2]) or torch.any(boxes[..., 1] > boxes[..., 3]):
-            raise ValueError('Expected boxes in format (xmin, ymin, xmax, ymax)')
-        if torch.any(scores > 1) or torch.any(scores < 0):
-            raise ValueError('Expected scores in range [0, 1]')
