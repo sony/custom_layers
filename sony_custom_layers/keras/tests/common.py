@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-import os
-import sys
+
+from sony_custom_layers.util.test_util import exec_in_clean_process
 
 
 class CustomOpTesterBase:
@@ -27,12 +27,10 @@ from sony_custom_layers.keras import custom_layers_scope
 with custom_layers_scope():
     tf.keras.models.load_model('{path}')
 """
-        ret = os.system(f'{sys.executable} -c "{cmd}"')
-        assert ret == 0
+        exec_in_clean_process(cmd, check=True)
 
     @staticmethod
     def _test_load_model(path):
         cmd = f"import tensorflow as tf;" \
               f"tf.keras.models.load_model('{path}')"
-        ret = os.system(f'{sys.executable} -c "{cmd}"')
-        assert ret == 0
+        exec_in_clean_process(cmd, check=True)

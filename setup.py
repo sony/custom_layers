@@ -23,4 +23,11 @@ Created on 7/9/23
 """
 from setuptools import setup
 
-setup()
+from sony_custom_layers import requirements
+
+extras_require = {
+    'torch': requirements['torch'] + requirements['torch_ort'],
+    'tf': requirements['tf'],
+}
+
+setup(extras_require=extras_require)

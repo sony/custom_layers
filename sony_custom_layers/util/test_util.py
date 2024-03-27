@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+import subprocess as sp
+import sys
 
-from sony_custom_layers.util.import_util import check_pip_requirements
-from sony_custom_layers import requirements
 
-check_pip_requirements(requirements['tf'])
-
-from .object_detection import FasterRCNNBoxDecode, SSDPostProcess, ScoreConverter    # noqa: E402
-from .custom_objects import custom_layers_scope    # noqa: E402
+def exec_in_clean_process(code: str, check: bool):
+    # run in new process not contaminated be previous imports
+    command = [sys.executable, '-c', code]
+    p = sp.run(command, shell=False, check=False, capture_output=True, text=True)
+    if check:
+        assert p.returncode == 0, f'\nSTDERR:\n{p.stderr}\nSTDOUT:\n{p.stdout}'
+    return p
