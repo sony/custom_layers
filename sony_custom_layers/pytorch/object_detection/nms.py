@@ -76,12 +76,12 @@ def _multiclass_nms_op(boxes: torch.Tensor, scores: torch.Tensor, score_threshol
 
 @torch.library.impl_abstract(MULTICLASS_NMS_TORCH_OP)
 def _multiclass_nms_meta(boxes: torch.Tensor, scores: torch.Tensor, score_threshold: float, iou_threshold: float,
-                         max_detections: int):
+                         max_detections: int) -> NMSResults:
     """ Registers torch op's abstract implementation. It specifies the properties of the output tensors.
         Needed for torch.export """
     ctx = torch.library.get_ctx()
     batch = ctx.new_dynamic_size()
-    return (
+    return NMSResults(
         torch.empty((batch, max_detections, 4)),
         torch.empty((batch, max_detections)),
         torch.empty((batch, max_detections), dtype=torch.int64),
@@ -155,7 +155,7 @@ def _image_multiclass_nms(boxes: Tensor, scores: Tensor, score_threshold: float,
     return out, valid_dets
 
 
-def _convert_inputs(boxes, scores, score_threshold) -> Tensor:
+def _convert_inputs(boxes: Tensor, scores: Tensor, score_threshold: float) -> Tensor:
     """
     Converts inputs and filters out boxes with score below the threshold.
     Args:
