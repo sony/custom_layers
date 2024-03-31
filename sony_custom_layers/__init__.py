@@ -16,7 +16,7 @@
 
 # for use by setup.py and for dynamic validation in sony_custom_layers.{keras, pytorch}.__init__
 requirements = {
-    'tf': ['tensorflow>=2.10,<2.16'],
+    'tf': ['tensorflow>=2.10,<2.17'],
     'torch': ['torch>=2.2.0', 'torchvision>=0.17.0'],
     'torch_ort': ['onnxruntime', 'onnxruntime_extensions>=0.8.0'],
 }
