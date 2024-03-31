@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------------
 from typing import Optional, TYPE_CHECKING
 
-from sony_custom_layers.util.import_util import check_pip_requirements
+from sony_custom_layers.util.import_util import validate_pip_requirements
 from sony_custom_layers import requirements
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 __all__ = ['multiclass_nms', 'NMSResults', 'load_custom_ops']
 
-check_pip_requirements(requirements['torch'])
+validate_pip_requirements(requirements['torch'])
 
 from .object_detection import multiclass_nms, NMSResults    # noqa: E402
 
@@ -53,7 +53,7 @@ def load_custom_ops(load_ort: bool = False,
         SessionOptions object if ort registration was requested, otherwise None
     """
     if load_ort or ort_session_ops:
-        check_pip_requirements(requirements['torch_ort'])
+        validate_pip_requirements(requirements['torch_ort'])
 
         # trigger onnxruntime op registration
         from .object_detection import nms_ort

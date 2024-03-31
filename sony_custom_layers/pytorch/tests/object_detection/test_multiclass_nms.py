@@ -25,6 +25,7 @@ import onnxruntime as ort
 
 from sony_custom_layers.pytorch.object_detection import nms
 from sony_custom_layers.pytorch import load_custom_ops
+from sony_custom_layers.util.import_util import is_compatible
 from sony_custom_layers.util.test_util import exec_in_clean_process
 
 
@@ -261,6 +262,7 @@ ort_res = session.run(output_names=None, input_feed={{'boxes': boxes, 'scores': 
         """
         exec_in_clean_process(code, check=True)
 
+    @pytest.mark.skipif(not is_compatible('torch>=2.2'), reason='unsupported')
     def test_pt2_export(self, tmpdir_factory):
 
         def f(boxes, scores):

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from typing import List
+from typing import List, Union
 
 from packaging.requirements import Requirement
 from packaging.version import parse
@@ -24,9 +24,9 @@ class RequirementError(Exception):
     pass
 
 
-def check_pip_requirements(requirements: List[str]):
+def validate_pip_requirements(requirements: List[str]):
     """
-    Check if all requirements are installed and meet the version specifications.
+    Validate that all requirements are installed and meet the version specifications.
 
     Args:
         requirements: a list of pip-style requirement strings
@@ -47,3 +47,20 @@ def check_pip_requirements(requirements: List[str]):
             error += f'\nRequired {req_str}, installed version {installed_ver}'
     if error:
         raise RequirementError(error)
+
+
+def is_compatible(requirements: Union[str, List]) -> bool:
+    """
+    Non-raising requirement(s) check
+    Args:
+        requirements (str, List): requirement pip-style string or a list of requirement strings
+
+    Returns:
+        (bool) whether requirement(s) are satisfied
+    """
+    requirements = [requirements] if isinstance(requirements, str) else requirements
+    try:
+        validate_pip_requirements(requirements)
+    except RequirementError:
+        return False
+    return True

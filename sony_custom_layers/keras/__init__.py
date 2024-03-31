@@ -14,10 +14,10 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from sony_custom_layers.util.import_util import check_pip_requirements
+from sony_custom_layers.util.import_util import validate_pip_requirements
 from sony_custom_layers import requirements
 
-check_pip_requirements(requirements['tf'])
+validate_pip_requirements(requirements['tf'])
 
 from .object_detection import FasterRCNNBoxDecode, SSDPostProcess, ScoreConverter    # noqa: E402
 from .custom_objects import custom_layers_scope    # noqa: E402
