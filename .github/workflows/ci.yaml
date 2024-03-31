@@ -38,7 +38,7 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          pip install tensorflow==${{matrix.tf_ver}}
+          pip install tensorflow==${{matrix.tf_ver}}.*
           pip install -r requirements_test.txt
           pip list
       - name: Run pytest
@@ -51,19 +51,23 @@ jobs:
       fail-fast: false
       matrix:
         py_ver: [ "3.8", "3.9", "3.10", "3.11" ]
-        ort_ver: ["1.15.*", "1.16.*", "1.17.*"]
-        ort_ext_ver: ["0.8.*", "0.9.*", "0.10.*"]
-        onnx_ver: ["1.14.*", "1.15.*"]
+        torch_ver: ["2.0", "2.1", "2.2"]
+        ort_ver: ["1.15", "1.16", "1.17"]
+        ort_ext_ver: ["0.8", "0.9", "0.10"]
         include:
-          - torch_ver: "2.2.*"
-            torchvision_ver: "0.17.*"
-          - torch_ver: "2.1.*"
-            torchvision_ver: "0.16.*"
-          - torch_ver: "2.0.*"
-            torchvision_ver: "0.15.*"
+          - torch_ver: "2.2"
+            torchvision_ver: "0.17"
+            onnx_ver: "1.15"
+          - torch_ver: "2.1"
+            torchvision_ver: "0.16"
+            onnx_ver: "1.14"
+          - torch_ver: "2.0"
+            torchvision_ver: "0.15"
+            onnx_ver: "1.15"
+
         exclude:
           - py_ver: "3.11"
-            ort_ext_ver: "0.8.*"
+            ort_ext_ver: "0.8"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -73,11 +77,11 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          pip install torch==${{matrix.torch_ver}} \
-                      torchvision==${{matrix.torchvision_ver}} \
-                      onnxruntime==${{matrix.ort_ver}} \
-                      onnxruntime_extensions==${{matrix.ort_ext_ver}} \
-                      onnx==${{matrix.onnx_ver}} \
+          pip install torch==${{matrix.torch_ver}}.* \
+                      torchvision==${{matrix.torchvision_ver}}.* \
+                      onnxruntime==${{matrix.ort_ver}}.* \
+                      onnxruntime_extensions==${{matrix.ort_ext_ver}}.* \
+                      onnx==${{matrix.onnx_ver}}.* \
                       --index-url https://download.pytorch.org/whl/cpu \
                       --extra-index-url https://pypi.org/simple
 
@@ -96,12 +100,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-
       - name: Run pre-commit
         run: |
           ./install-pre-commit.sh
           pre-commit run --all
-
       - name: get new dev tag
         shell: bash
         run : |
@@ -133,7 +135,7 @@ jobs:
           echo "__version__ = '${{ env.new_ver }}'" >  sony_custom_layers/version.py
           echo "print sony_custom_layers/version.py"
           cat sony_custom_layers/version.py
-          
+        
           sed -i 's/name = sony-custom-layers/name = sony-custom-layers-dev/' setup.cfg
           echo "print setup.cfg"
           cat setup.cfg
@@ -153,5 +155,3 @@ jobs:
             git tag ${{ env.new_tag }}
             git push origin ${{ env.new_tag }}
           fi
-         
-    
