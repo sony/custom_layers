@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,10 +14,8 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-from sony_custom_layers.util.import_util import check_pip_requirements
-from sony_custom_layers import requirements
+from .nms import multiclass_nms, NMSResults
+# trigger onnx op registration
+from . import nms_onnx
 
-check_pip_requirements(requirements['tf'])
-
-from .object_detection import FasterRCNNBoxDecode, SSDPostProcess, ScoreConverter    # noqa: E402
-from .custom_objects import custom_layers_scope    # noqa: E402
+__all__ = ['multiclass_nms', 'NMSResults']

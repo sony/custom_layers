@@ -38,26 +38,61 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Python 3
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
           pip install tensorflow==${{matrix.tf_ver}}.*
           pip install -r requirements_test.txt
+          pip list
       - name: Run pytest
         run: |
           pytest sony_custom_layers/keras
+
+  run-torch-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        py_ver: [ "3.8", "3.9", "3.10", "3.11" ]
+        torch_ver: ["2.2.*"]
+        torchvision_ver: ["0.17.*"]  # <0.17 incompatible with torch2.2
+        ort_ver: ["1.15.*", "1.16.*", "1.17.*"]        
+        ort_ext_ver: ["0.8.*", "0.9.*", "0.10.*"]
+        onnx_ver: ["1.14.*", "1.15.*"]
+        exclude:
+          - py_ver: "3.11"
+            ort_ext_ver: "0.8.*"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{matrix.py_ver}}
+      - name: Install dependencies
+        run: |
+          pip install torch==${{matrix.torch_ver}} \
+                      torchvision==${{matrix.torchvision_ver}} \
+                      onnxruntime==${{matrix.ort_ver}} \
+                      onnxruntime_extensions==${{matrix.ort_ext_ver}} \
+                      onnx==${{matrix.onnx_ver}}
+          pip install -r requirements_test.txt
+          pip list
+      - name: Run pytest
+        run: |
+          pytest sony_custom_layers/pytorch
   build:
-    needs: [run-tf-tests]
+    needs: [run-tf-tests, run-torch-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Python 3
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
