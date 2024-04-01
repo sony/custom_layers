@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------------
 import torch
 
-from .nms import MULTICLASS_NMS_TORCH_OP
+from .nms import MULTICLASS_NMS_TORCH_OP_QUALNAME
 
 MULTICLASS_NMS_ONNX_OP = "Sony::MultiClassNMS"
 
@@ -42,4 +42,4 @@ def multiclass_nms_onnx(g, boxes, scores, score_threshold, iou_threshold, max_de
     return outputs
 
 
-torch.onnx.register_custom_op_symbolic(MULTICLASS_NMS_TORCH_OP, multiclass_nms_onnx, opset_version=1)
+torch.onnx.register_custom_op_symbolic(MULTICLASS_NMS_TORCH_OP_QUALNAME, multiclass_nms_onnx, opset_version=1)

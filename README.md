@@ -20,11 +20,11 @@ To install the latest stable release of SCL, run the following command:
 pip install sony-custom-layers
 ```
 By default, no framework dependencies are installed.
-To install SCL including the dependencies for TensorFlow:
+To install SCL including the latest tested dependencies (up to patch version) for TensorFlow:
 ```
 pip install sony-custom-layers[tf]
 ```
-To install SCL including the dependencies for PyTorch/ONNX/OnnxRuntime:
+To install SCL including the latest tested dependencies (up to patch version) for PyTorch/ONNX/OnnxRuntime:
 ```
 pip install sony-custom-layers[torch]
 ```
@@ -43,9 +43,9 @@ pip install sony-custom-layers[torch]
 
 #### PyTorch
 
-| **Tested FW versions**          | **Tested Python version** | **Serialization**                                                |
-|---------------------------------|---------------------------|------------------------------------------------------------------|
-| torch 2.2<br/>torchvision 0.17<br/>onnxruntime 1.15-1.17<br/>onnxruntime_extensions 0.8-0.10<br/>onnx 1.14-1.15| 3.8-3.11                  | .onnx (via torch.onnx.export)<br/>.pt2 (via torch.export.export) |
+| **Tested FW versions**                                                                                                   | **Tested Python version** | **Serialization**                                                               |
+|--------------------------------------------------------------------------------------------------------------------------|---------------------------|---------------------------------------------------------------------------------|
+| torch 2.0-2.2<br/>torchvision 0.15-0.17<br/>onnxruntime 1.15-1.17<br/>onnxruntime_extensions 0.8-0.10<br/>onnx 1.14-1.15 | 3.8-3.11                  | .onnx (via torch.onnx.export)<br/>.pt2 (via torch.export.export, torch2.2 only) |
 
 ## Implemented Layers
 SCL currently includes implementations of the following layers:
