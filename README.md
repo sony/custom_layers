@@ -20,11 +20,11 @@ To install the latest stable release of SCL, run the following command:
 pip install sony-custom-layers
 ```
 By default, no framework dependencies are installed.
-To install SCL including the dependencies for TensorFlow:
+To install SCL including the latest tested dependencies (up to patch version) for TensorFlow:
 ```
 pip install sony-custom-layers[tf]
 ```
-To install SCL including the dependencies for PyTorch/ONNX/OnnxRuntime:
+To install SCL including the latest tested dependencies (up to patch version) for PyTorch/ONNX/OnnxRuntime:
 ```
 pip install sony-custom-layers[torch]
 ```

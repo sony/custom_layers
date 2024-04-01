@@ -23,11 +23,11 @@ Created on 7/9/23
 """
 from setuptools import setup
 
-from sony_custom_layers import requirements
+from sony_custom_layers import pinned_requirements
 
 extras_require = {
-    'torch': requirements['torch'] + requirements['torch_ort'],
-    'tf': requirements['tf'],
+    'torch': pinned_requirements['torch'] + pinned_requirements['torch_ort'],
+    'tf': pinned_requirements['tf'],
 }
 
 setup(extras_require=extras_require)

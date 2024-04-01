@@ -14,9 +14,16 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
-# for use by setup.py and for dynamic validation in sony_custom_layers.{keras, pytorch}.__init__
+# minimal requirements for dynamic validation in sony_custom_layers.{keras, pytorch}.__init__
 requirements = {
-    'tf': ['tensorflow>=2.10,<2.16'],
+    'tf': ['tensorflow>=2.10'],
     'torch': ['torch>=2.0', 'torchvision>=0.15'],
-    'torch_ort': ['onnxruntime', 'onnxruntime_extensions>=0.8.0'],
+    'torch_ort': ['onnx', 'onnxruntime', 'onnxruntime_extensions>=0.8.0'],
+}
+
+# pinned requirements of latest tested versions for extra_requires
+pinned_requirements = {
+    'tf': ['tensorflow==2.15.*'],
+    'torch': ['torch==2.2.*', 'torchvision==0.17.*'],
+    'torch_ort': ['onnx==1.15.*', 'onnxruntime==1.17.*', 'onnxruntime_extensions==0.10.*']
 }
