@@ -28,3 +28,8 @@ Agnostic to the x-y axes order.</ul>
 </ul>
 <p><strong>Raises:</strong></p>
 <ul>ValueError: Invalid arguments are passed or input tensors with unexpected shape are received.</ul>
+
+<p><strong>NMSResults</strong> also provides the following methods: 
+<ul><strong>detach()</strong> - detach all tensors and return a new NMSResults object</ul> 
+<ul><strong>cpu()</strong> - move all tensors to cpu and return a new NMSResults object</ul> 
+<ul><strong>apply(f: Callable[[Tensor], Tensor])</strong> - apply a function f to all tensors and return a new NMSResults object</ul>

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from typing import Tuple, NamedTuple, Union
+from typing import Tuple, NamedTuple, Union, Callable
 
 import numpy as np
 import torch
@@ -34,6 +34,18 @@ class NMSResults(NamedTuple):
     scores: Tensor
     labels: Tensor
     n_valid: Tensor
+
+    def detach(self) -> 'NMSResults':
+        """ detach all tensors and return a new NMSResults object """
+        return self.apply(lambda t: t.detach())
+
+    def cpu(self) -> 'NMSResults':
+        """ move all tensors to cpu and return a new NMSResults object """
+        return self.apply(lambda t: t.cpu())
+
+    def apply(self, f: Callable[[Tensor], Tensor]) -> 'NMSResults':
+        """ apply any function to all tensors and return a NMSResults new object """
+        return NMSResults(*[f(t) for t in self])
 
 
 def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, max_detections: int) -> NMSResults:
