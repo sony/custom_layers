@@ -127,6 +127,14 @@ class TestMultiClassNMS:
         assert torch.all(ret[:, 5][exp_valid_dets:] == 0)
         assert ret_valid_dets == exp_valid_dets
 
+    def test_empty_tensors(self):
+        # empty inputs
+        ret = nms.multiclass_nms(torch.rand(1, 0, 4), torch.rand(1, 0, 10), 0.55, 0.6, 50)
+        assert ret.n_valid[0] == 0 and ret.boxes.size(1) == 50
+        # no valid scores
+        ret = nms.multiclass_nms(torch.rand(1, 100, 4), torch.rand(1, 100, 20) / 2, 0.55, 0.6, 50)
+        assert ret.n_valid[0] == 0 and ret.boxes.size(1) == 50
+
     def test_batch_multiclass_nms(self, mocker):
         input_boxes, input_scores = self._generate_random_inputs(batch=3, n_boxes=20, n_classes=10)
         max_dets = 5

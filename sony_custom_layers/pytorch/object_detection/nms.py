@@ -159,10 +159,12 @@ def _image_multiclass_nms(boxes: Tensor, scores: Tensor, score_threshold: float,
 
     """
     x = _convert_inputs(boxes, scores, score_threshold)
+    out = torch.zeros(max_detections, 6, device=boxes.device)
+    if x.size(0) == 0:
+        return out, 0
     idxs = _nms_with_class_offsets(x, iou_threshold=iou_threshold)
     idxs = idxs[:max_detections]
     valid_dets = idxs.numel()
-    out = torch.zeros(max_detections, 6, device=boxes.device)
     out[:valid_dets] = x[idxs]
     return out, valid_dets
 
