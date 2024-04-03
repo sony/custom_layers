@@ -5,7 +5,7 @@ Sony Custom Layers (SCL) is an open-source project implementing detection post p
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-- [Implemented Layers](#implemented-layers)
+- [API](#API)
 - [License](#license)
 
 
@@ -47,19 +47,8 @@ pip install sony-custom-layers[torch]
 |--------------------------------------------------------------------------------------------------------------------------|---------------------------|---------------------------------------------------------------------------------|
 | torch 2.0-2.2<br/>torchvision 0.15-0.17<br/>onnxruntime 1.15-1.17<br/>onnxruntime_extensions 0.8-0.10<br/>onnx 1.14-1.15 | 3.8-3.11                  | .onnx (via torch.onnx.export)<br/>.pt2 (via torch.export.export, torch2.2 only) |
 
-## Implemented Layers
-SCL currently includes implementations of the following layers:
-### TensorFlow
-
-| **Layer Name**      | **Description**                                      | **API documentation**     |
-|---------------------|---------------------------------------------|---------------------------|
-| FasterRCNNBoxDecode | Box decoding per [Faster R-CNN](https://arxiv.org/abs/1506.01497) with clipping |  [doc](./sony_custom_layers/keras/object_detection/ssd_pp.md)              |            
-| SSDPostProcess      | Post process as described in [SSD: Single Shot MultiBox Detector](https://arxiv.org/abs/1512.02325)  |[doc](./sony_custom_layers/keras/object_detection/faster_rcnn_box_decode.md)                | 
-
-### PyTorch
-| **Op/Layer Name** | **Description**                                                                                      | **API documentation**                                                  |
-|-------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
-| multiclass_nms    | Multi-class non-maximum suppression  | [doc](./sony_custom_layers/pytorch/object_detection/multiclass_nms.md) |            
+## API
+See https://sony.github.io/custom_layers
 
 ## Loading the model
 ### TensorFlow
