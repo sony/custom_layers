@@ -70,6 +70,14 @@ class SSDPostProcess(CustomLayer):
                                applied).
         """
         super().__init__(**kwargs)
+
+        if not 0 <= score_threshold <= 1:
+            raise ValueError(f'Invalid score_threshold {score_threshold} not in range [0, 1]')
+        if not 0 <= iou_threshold <= 1:
+            raise ValueError(f'Invalid iou_threshold {iou_threshold} not in range [0, 1]')
+        if max_detections <= 0:
+            raise ValueError(f'Invalid non-positive max_detections {max_detections}')
+
         self.cfg = SSDPostProcessCfg(anchors=anchors,
                                      scale_factors=scale_factors,
                                      clip_size=clip_size,
