@@ -30,21 +30,22 @@ __all__ = ['multiclass_nms', 'NMSResults']
 
 
 class NMSResults(NamedTuple):
+    """ Container for non-maximum suppression results """
     boxes: Tensor
     scores: Tensor
     labels: Tensor
     n_valid: Tensor
 
     def detach(self) -> 'NMSResults':
-        """ detach all tensors and return a new NMSResults object """
+        """ Detach all tensors and return a new NMSResults object """
         return self.apply(lambda t: t.detach())
 
     def cpu(self) -> 'NMSResults':
-        """ move all tensors to cpu and return a new NMSResults object """
+        """ Move all tensors to cpu and return a new NMSResults object """
         return self.apply(lambda t: t.cpu())
 
     def apply(self, f: Callable[[Tensor], Tensor]) -> 'NMSResults':
-        """ apply any function to all tensors and return a NMSResults new object """
+        """ Apply any function to all tensors and return a NMSResults new object """
         return NMSResults(*[f(t) for t in self])
 
 
@@ -65,10 +66,10 @@ def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, 
 
     Returns:
         'NMSResults' named tuple:
-            boxes (Tensor): The selected boxes with shape [batch, max_detections, 4].
-            scores (Tensor): The corresponding scores in descending order with shape [batch, max_detections].
-            labels (Tensor): The labels for each box with shape [batch, max_detections].
-            n_valid (Tensor): The number of valid detections out of 'max_detections' with shape [batch, 1]
+        - boxes: The selected boxes with shape [batch, max_detections, 4].
+        - scores: The corresponding scores in descending order with shape [batch, max_detections].
+        - labels: The labels for each box with shape [batch, max_detections].
+        - n_valid: The number of valid detections out of 'max_detections' with shape [batch, 1]
     """
     return NMSResults(*torch.ops.sony.multiclass_nms(boxes, scores, score_threshold, iou_threshold, max_detections))
 

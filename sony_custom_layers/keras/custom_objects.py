@@ -29,19 +29,21 @@ def custom_layers_scope(*args: dict):
 
     If the model contains additional custom layers from other sources, there are two ways:
     1. Pass a list of dictionaries {layer_name: layer_object} as *args.
-
+        ```
         with custom_layers_scope({'Op1': Op1, 'Op2': Op2}, {'Op3': Op3}):
             tf.keras.models.load_model(path)
-
+        ```
     2. Combined with other scopes based on tf.keras.utils.custom_object_scope:
-
+        ```
         with custom_layers_scope(), another_scope():
             tf.keras.models.load_model(path)
+
         # or:
+
         with custom_layers_scope():
             with another_scope():
                 tf.keras.models.load_model(path)
-
+        ```
     Args:
         *args: a list of dictionaries for other custom layers
 
