@@ -36,7 +36,7 @@ jobs:
             git config user.name "GitHub Actions [Bot]" 
             branch=${{ github.head_ref }}
             echo branch $branch
-            new_branch=$branch_update_docs
+            new_branch=${branch}_update_docs
             echo new_branch $new_branch
             git checkout -b $new_branch
             git add docs
