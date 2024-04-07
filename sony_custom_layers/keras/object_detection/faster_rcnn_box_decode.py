@@ -26,20 +26,35 @@ from sony_custom_layers.keras.custom_objects import register_layer
 
 @register_layer
 class FasterRCNNBoxDecode(CustomLayer):
+    """
+    Box decoding as per Faster R-CNN <https://arxiv.org/abs/1506.01497>.
+
+    Args:
+        anchors: Anchors with a shape of (n_boxes, 4) in corner coordinates (y_min, x_min, y_max, x_max).
+        scale_factors: Scaling factors in the format (y, x, height, width).
+        clip_window: Clipping window in the format (y_min, x_min, y_max, x_max).
+
+    Inputs:
+        **rel_codes** (Tensor): Relative codes (encoded offsets) with a shape of (batch, n_boxes, 4) in centroid
+                                coordinates (y_center, x_center, h, w).
+
+    Returns:
+        Decoded boxes with a shape of (batch, n_boxes, 4) in corner coordinates (y_min, x_min, y_max, x_max).
+
+    Raises:
+        ValueError: If provided with invalid arguments or an input tensor with unexpected shape
+
+    Example:
+        ```
+        from sony_custom_layers.keras import FasterRCNNBoxDecode
+
+        box_decode = FasterRCNNBoxDecode(anchors, scale_factors=(10, 10, 5, 5), clip_window=(0, 0, 1, 1))
+        decoded_boxes = box_decode(rel_codes)
+        ```
+    """
 
     def __init__(self, anchors: Union[np.ndarray, tf.Tensor, List[List[float]]],
                  scale_factors: Sequence[Union[float, int]], clip_window: Sequence[Union[float, int]], **kwargs):
-        """
-        Box decoding as per Faster R-CNN (https://arxiv.org/abs/1506.01497).
-
-        Args:
-            anchors: Anchors with a shape of (n_boxes, 4) in corner coordinates (y_min, x_min, y_max, x_max).
-            scale_factors: Scaling factors in the format (y, x, height, width).
-            clip_window: Clipping window in the format (y_min, x_min, y_max, x_max).
-
-        Raises:
-            ValueError: If provided with invalid parameters.
-        """
         super().__init__(**kwargs)
         anchors = tf.constant(anchors)
         if not (len(anchors.shape) == 2 and anchors.shape[-1] == 4):
@@ -55,17 +70,7 @@ class FasterRCNNBoxDecode(CustomLayer):
         self.clip_window = clip_window
 
     def call(self, rel_codes: tf.Tensor, *args, **kwargs) -> tf.Tensor:
-        """
-        Args:
-            rel_codes: Relative codes (encoded offsets) with a shape of (batch, n_boxes, 4) in centroid coordinates
-                       (y_center, x_center, h, w).
-
-        Returns:
-            Decoded boxes with a shape of (batch, n_boxes, 4) in corner coordinates (y_min, x_min, y_max, x_max).
-
-        Raises:
-            ValueError: If an input tensor with an unexpected shape is received.
-        """
+        """ """
         if len(rel_codes.shape) != 3 or rel_codes.shape[-1] != 4:
             raise ValueError(f'Invalid input tensor shape {rel_codes.shape}. Expected shape (batch, n_boxes, 4).')
         if rel_codes.shape[-2] != self.anchors.shape[-2]:
@@ -89,6 +94,7 @@ class FasterRCNNBoxDecode(CustomLayer):
         return boxes
 
     def get_config(self) -> dict:
+        """ """
         config = super().get_config()
         config.update({
             'anchors': self.anchors.numpy().tolist(),
