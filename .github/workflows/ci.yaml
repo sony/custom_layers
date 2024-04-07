@@ -38,7 +38,7 @@ jobs:
             git add docs
             git commit -m "Update docs [Created by Github action]"
             git push origin $new_branch
-            gh pr create --base $branch --head $new_branch --fill --assignee ${{ github.actor }} 
+            gh pr create --base $branch --head $new_branch --title "Update docs [Created by Github action]" --body "" --assignee ${{ github.actor }} 
             exit 1
           fi
         env:
