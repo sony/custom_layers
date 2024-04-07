@@ -59,10 +59,11 @@ class SSDPostProcess(CustomLayer):
         remove_background (bool) : If True, the first class is removed from the input scores (after the score_converter
                                    is applied).
 
-    Inputs: A list or tuple of:
-        **rel_codes** (Tensor): Relative codes (encoded offsets) with a shape of (batch, n_boxes, 4) in centroid
+    Inputs:
+        A list or tuple of:
+        - **rel_codes** (Tensor): Relative codes (encoded offsets) with a shape of (batch, n_boxes, 4) in centroid
                             coordinates (y_center, x_center, w, h).
-        **scores** (Tensor): Scores or logits with a shape of (batch, n_boxes, n_labels).
+        - **scores** (Tensor): Scores or logits with a shape of (batch, n_boxes, n_labels).
 
     Returns:
         'CombinedNonMaxSuppression' named tuple:

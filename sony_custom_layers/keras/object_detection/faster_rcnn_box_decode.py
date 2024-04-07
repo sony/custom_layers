@@ -48,7 +48,9 @@ class FasterRCNNBoxDecode(CustomLayer):
         ```
         from sony_custom_layers.keras import FasterRCNNBoxDecode
 
-        box_decode = FasterRCNNBoxDecode(anchors, scale_factors=(10, 10, 5, 5), clip_window=(0, 0, 1, 1))
+        box_decode = FasterRCNNBoxDecode(anchors,
+                                         scale_factors=(10, 10, 5, 5),
+                                         clip_window=(0, 0, 1, 1))
         decoded_boxes = box_decode(rel_codes)
         ```
     """

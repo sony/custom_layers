@@ -22,11 +22,12 @@ def custom_layers_scope(*args: dict):
     """
     Scope context manager that can be used to deserialize Keras models containing custom layers
 
-    If a model contains custom layers only from this package:
-        from sony_custom_layers.keras import custom_layers_scope
-        with custom_layers_scope():
-            tf.keras.models.load_model(path)
-
+    If the model contains custom layers only from this package:
+    ```
+    from sony_custom_layers.keras import custom_layers_scope
+    with custom_layers_scope():
+        tf.keras.models.load_model(path)
+    ```
     If the model contains additional custom layers from other sources, there are two ways:
     1. Pass a list of dictionaries {layer_name: layer_object} as *args.
         ```

@@ -70,6 +70,24 @@ def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, 
         - scores: The corresponding scores in descending order with shape [batch, max_detections].
         - labels: The labels for each box with shape [batch, max_detections].
         - n_valid: The number of valid detections out of 'max_detections' with shape [batch, 1]
+
+    Raises:
+        ValueError: If provided with invalid arguments or input tensors with unexpected or non-matching shapes.
+
+    Example:
+        ```
+        from sony_custom_layers.pytorch import multiclass_nms
+
+        # batch size=1, 1000 boxes, 50 classes
+        boxes = torch.rand(1, 1000, 4)
+        scores = torch.rand(1, 1000, 50)
+        res = multiclass_nms(boxes,
+                             scores,
+                             score_threshold=0.1,
+                             iou_threshold=0.6,
+                             max_detections=300)
+        # res.boxes, res.scores, res.labels, res.n_valid
+        ```
     """
     return NMSResults(*torch.ops.sony.multiclass_nms(boxes, scores, score_threshold, iou_threshold, max_detections))
 
