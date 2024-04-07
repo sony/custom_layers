@@ -42,6 +42,56 @@ class SSDPostProcessCfg:
 
 @register_layer
 class SSDPostProcess(CustomLayer):
+    """
+    SSD Post Processing, based on <https://arxiv.org/abs/1512.02325>.
+
+    Args:
+        anchors (Tensor | np.ndarray): Anchors with a shape of (n_boxes, 4) in corner coordinates
+                                       (y_min, x_min, y_max, x_max).
+        scale_factors (list | tuple): Box decoding scaling factors in the format (y, x, height, width).
+        clip_size (list | tuple): Clipping size in the format (height, width). The decoded boxes are clipped to the
+                                  range y=[0, height] and x=[0, width]. Typically, the clipping size is (1, 1) for
+                                  normalized boxes and the image size for boxes in pixel coordinates.
+        score_converter (ScoreConverter): Conversion to apply to the input logits (sigmoid, softmax, or linear).
+        score_threshold (float): Score threshold for non-maximum suppression.
+        iou_threshold (float): Intersection over union threshold for non-maximum suppression.
+        max_detections (int): The number of detections to return.
+        remove_background (bool) : If True, the first class is removed from the input scores (after the score_converter
+                                   is applied).
+
+    Inputs: A list or tuple of:
+        **rel_codes** (Tensor): Relative codes (encoded offsets) with a shape of (batch, n_boxes, 4) in centroid
+                            coordinates (y_center, x_center, w, h).
+        **scores** (Tensor): Scores or logits with a shape of (batch, n_boxes, n_labels).
+
+    Returns:
+        'CombinedNonMaxSuppression' named tuple:
+        - nmsed_boxes: Selected boxes sorted by scores in descending order, with a shape of
+                         (batch, max_detections, 4),in corner coordinates (y_min, x_min, y_max, x_max).
+        - nmsed_scores: Scores corresponding to the selected boxes, with a shape of (batch, max_detections).
+        - nmsed_classes: Labels corresponding to the selected boxes, with a shape of (batch, max_detections).
+                           Each label corresponds to the class index of the selected score in the input scores.
+        - valid_detections: The number of valid detections out of max_detections.
+
+    Raises:
+        ValueError: If provided with invalid arguments or input tensors with unexpected or non-matching shapes.
+
+    Example:
+        ```
+        from sony_custom_layers.keras import SSDPostProcessing, ScoreConverter
+
+        post_process = SSDPostProcess(anchors=anchors,
+                                      scale_factors=(10, 10, 5, 5),
+                                      clip_size=(320, 320),
+                                      score_converter=ScoreConverter.SIGMOID,
+                                      score_threshold=0.01,
+                                      iou_threshold=0.6,
+                                      max_detections=200,
+                                      remove_background=True)
+        res = post_process([rel_codes, logits])
+        boxes = res.nmsed_boxes
+        ```
+    """
 
     def __init__(self,
                  anchors: Union[np.ndarray, tf.Tensor, List[List[float]]],
@@ -53,23 +103,16 @@ class SSDPostProcess(CustomLayer):
                  max_detections: int,
                  remove_background: bool = False,
                  **kwargs):
-        """
-        SSD Post Processing, based on https://arxiv.org/abs/1512.02325.
-
-        Args:
-            anchors: Anchors with a shape of (n_boxes, 4) in corner coordinates (y_min, x_min, y_max, x_max).
-            scale_factors: Box decoding scaling factors in the format (y, x, height, width).
-            clip_size: Clipping size in the format (height, width). The decoded boxes are clipped to the
-                       range y=[0, height] and x=[0, width]. Typically, the clipping size is (1, 1) for normalized boxes
-                       and the image size for boxes in pixel coordinates.
-            score_converter: Conversion to apply to the input logits (sigmoid, softmax, or linear).
-            score_threshold: Score threshold for non-maximum suppression.
-            iou_threshold: Intersection over union threshold for non-maximum suppression.
-            max_detections: The number of detections to return.
-            remove_background: If True, the first class is removed from the input scores (after the score_converter is
-                               applied).
-        """
+        """ """
         super().__init__(**kwargs)
+
+        if not 0 <= score_threshold <= 1:
+            raise ValueError(f'Invalid score_threshold {score_threshold} not in range [0, 1]')
+        if not 0 <= iou_threshold <= 1:
+            raise ValueError(f'Invalid iou_threshold {iou_threshold} not in range [0, 1]')
+        if max_detections <= 0:
+            raise ValueError(f'Invalid non-positive max_detections {max_detections}')
+
         self.cfg = SSDPostProcessCfg(anchors=anchors,
                                      scale_factors=scale_factors,
                                      clip_size=clip_size,
@@ -81,25 +124,7 @@ class SSDPostProcess(CustomLayer):
         self._box_decode = FasterRCNNBoxDecode(anchors, scale_factors, (0, 0, *clip_size))
 
     def call(self, inputs: Sequence[tf.Tensor], *args, **kwargs) -> Tuple[tf.Tensor]:
-        """
-        Args:
-            inputs: A list or tuple consisting of (rel_codes, scores).
-              0: Relative codes (encoded offsets) with a shape of (batch, n_boxes, 4) in centroid coordinates
-                 (y_center, x_center, w, h).
-              1: Scores or logits with a shape of (batch, n_boxes, n_labels).
-
-        Returns:
-            0: Selected boxes sorted by scores in descending order, with a shape of (batch, max_detections, 4),
-               in corner coordinates (y_min, x_min, y_max, x_max).
-            1: Scores corresponding to the selected boxes, with a shape of (batch, max_detections).
-            2: Labels corresponding to the selected boxes, with a shape of (batch, max_detections).
-               Each label corresponds to the class index of the selected score in the input scores.
-            3: The number of valid detections out of max_detections.
-
-        Raises:
-            ValueError: If provided input tensors have unexpected or non-matching shapes.
-        """
-
+        """ """
         rel_codes, scores = inputs
         if len(rel_codes.shape) != 3 and rel_codes.shape[-1] != 4:
             raise ValueError(f'Invalid input offsets shape {rel_codes.shape}. '
@@ -132,6 +157,7 @@ class SSDPostProcess(CustomLayer):
         return outputs
 
     def get_config(self) -> dict:
+        """ """
         config = super().get_config()
         d = self.cfg.as_dict()
         d['anchors'] = tf.constant(d['anchors']).numpy().tolist()
