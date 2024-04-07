@@ -127,12 +127,12 @@ sony_custom_layers<wbr>.pytorch    </h1>
 </span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a><span class="sd">    Note: this is a must for onnxruntime. To trigger torch ops registration any import from sony_custom_layers.pytorch</span>
 </span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a><span class="sd">    is technically sufficient. This is just a dummy api to prevent unused import (e.g. when loading exported pt2 model)</span>
 </span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a>
-</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a><span class="sd">    Usage:</span>
-</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a><span class="sd">        # for onnxruntime</span>
+</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a><span class="sd">    Example:</span>
+</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a><span class="sd">        ```</span>
 </span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a><span class="sd">        so = load_custom_ops(load_ort=True)</span>
 </span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a><span class="sd">        session = ort.InferenceSession(model_path, sess_options=so)</span>
 </span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a><span class="sd">        session.run(...)</span>
-</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a>
+</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a><span class="sd">        ```</span>
 </span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a><span class="sd">    Args:</span>
 </span><span id="L-48"><a href="#L-48"><span class="linenos">48</span></a><span class="sd">        load_ort: whether to register the custom ops for onnxruntime.</span>
 </span><span id="L-49"><a href="#L-49"><span class="linenos">49</span></a><span class="sd">        ort_session_ops: SessionOptions object to register the custom ops library on. If None (and &#39;load_ort&#39; is True),</span>
@@ -191,8 +191,26 @@ sony_custom_layers<wbr>.pytorch    </h1>
 </span><span id="multiclass_nms-71"><a href="#multiclass_nms-71"><span class="linenos">71</span></a><span class="sd">        - scores: The corresponding scores in descending order with shape [batch, max_detections].</span>
 </span><span id="multiclass_nms-72"><a href="#multiclass_nms-72"><span class="linenos">72</span></a><span class="sd">        - labels: The labels for each box with shape [batch, max_detections].</span>
 </span><span id="multiclass_nms-73"><a href="#multiclass_nms-73"><span class="linenos">73</span></a><span class="sd">        - n_valid: The number of valid detections out of &#39;max_detections&#39; with shape [batch, 1]</span>
-</span><span id="multiclass_nms-74"><a href="#multiclass_nms-74"><span class="linenos">74</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="multiclass_nms-75"><a href="#multiclass_nms-75"><span class="linenos">75</span></a>    <span class="k">return</span> <span class="n">NMSResults</span><span class="p">(</span><span class="o">*</span><span class="n">torch</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">sony</span><span class="o">.</span><span class="n">multiclass_nms</span><span class="p">(</span><span class="n">boxes</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">score_threshold</span><span class="p">,</span> <span class="n">iou_threshold</span><span class="p">,</span> <span class="n">max_detections</span><span class="p">))</span>
+</span><span id="multiclass_nms-74"><a href="#multiclass_nms-74"><span class="linenos">74</span></a>
+</span><span id="multiclass_nms-75"><a href="#multiclass_nms-75"><span class="linenos">75</span></a><span class="sd">    Raises:</span>
+</span><span id="multiclass_nms-76"><a href="#multiclass_nms-76"><span class="linenos">76</span></a><span class="sd">        ValueError: If provided with invalid arguments or input tensors with unexpected or non-matching shapes.</span>
+</span><span id="multiclass_nms-77"><a href="#multiclass_nms-77"><span class="linenos">77</span></a>
+</span><span id="multiclass_nms-78"><a href="#multiclass_nms-78"><span class="linenos">78</span></a><span class="sd">    Example:</span>
+</span><span id="multiclass_nms-79"><a href="#multiclass_nms-79"><span class="linenos">79</span></a><span class="sd">        ```</span>
+</span><span id="multiclass_nms-80"><a href="#multiclass_nms-80"><span class="linenos">80</span></a><span class="sd">        from sony_custom_layers.pytorch import multiclass_nms</span>
+</span><span id="multiclass_nms-81"><a href="#multiclass_nms-81"><span class="linenos">81</span></a>
+</span><span id="multiclass_nms-82"><a href="#multiclass_nms-82"><span class="linenos">82</span></a><span class="sd">        # batch size=1, 1000 boxes, 50 classes</span>
+</span><span id="multiclass_nms-83"><a href="#multiclass_nms-83"><span class="linenos">83</span></a><span class="sd">        boxes = torch.rand(1, 1000, 4)</span>
+</span><span id="multiclass_nms-84"><a href="#multiclass_nms-84"><span class="linenos">84</span></a><span class="sd">        scores = torch.rand(1, 1000, 50)</span>
+</span><span id="multiclass_nms-85"><a href="#multiclass_nms-85"><span class="linenos">85</span></a><span class="sd">        res = multiclass_nms(boxes,</span>
+</span><span id="multiclass_nms-86"><a href="#multiclass_nms-86"><span class="linenos">86</span></a><span class="sd">                             scores,</span>
+</span><span id="multiclass_nms-87"><a href="#multiclass_nms-87"><span class="linenos">87</span></a><span class="sd">                             score_threshold=0.1,</span>
+</span><span id="multiclass_nms-88"><a href="#multiclass_nms-88"><span class="linenos">88</span></a><span class="sd">                             iou_threshold=0.6,</span>
+</span><span id="multiclass_nms-89"><a href="#multiclass_nms-89"><span class="linenos">89</span></a><span class="sd">                             max_detections=300)</span>
+</span><span id="multiclass_nms-90"><a href="#multiclass_nms-90"><span class="linenos">90</span></a><span class="sd">        # res.boxes, res.scores, res.labels, res.n_valid</span>
+</span><span id="multiclass_nms-91"><a href="#multiclass_nms-91"><span class="linenos">91</span></a><span class="sd">        ```</span>
+</span><span id="multiclass_nms-92"><a href="#multiclass_nms-92"><span class="linenos">92</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="multiclass_nms-93"><a href="#multiclass_nms-93"><span class="linenos">93</span></a>    <span class="k">return</span> <span class="n">NMSResults</span><span class="p">(</span><span class="o">*</span><span class="n">torch</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">sony</span><span class="o">.</span><span class="n">multiclass_nms</span><span class="p">(</span><span class="n">boxes</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">score_threshold</span><span class="p">,</span> <span class="n">iou_threshold</span><span class="p">,</span> <span class="n">max_detections</span><span class="p">))</span>
 </span></pre></div>
 
 
@@ -223,6 +241,29 @@ If fewer detections are selected, the output tensors are zero-padded up to 'max_
   <li>labels: The labels for each box with shape [batch, max_detections].</li>
   <li>n_valid: The number of valid detections out of 'max_detections' with shape [batch, 1]</li>
   </ul>
+</blockquote>
+
+<h6 id="raises">Raises:</h6>
+
+<ul>
+<li><strong>ValueError:</strong>  If provided with invalid arguments or input tensors with unexpected or non-matching shapes.</li>
+</ul>
+
+<h6 id="example">Example:</h6>
+
+<blockquote>
+<pre><code>from sony_custom_layers.pytorch import multiclass_nms
+
+# batch size=1, 1000 boxes, 50 classes
+boxes = torch.rand(1, 1000, 4)
+scores = torch.rand(1, 1000, 50)
+res = multiclass_nms(boxes,
+                     scores,
+                     score_threshold=0.1,
+                     iou_threshold=0.6,
+                     max_detections=300)
+# res.boxes, res.scores, res.labels, res.n_valid
+</code></pre>
 </blockquote>
 </div>
 
@@ -428,12 +469,12 @@ If fewer detections are selected, the output tensors are zero-padded up to 'max_
 </span><span id="load_custom_ops-39"><a href="#load_custom_ops-39"><span class="linenos">39</span></a><span class="sd">    Note: this is a must for onnxruntime. To trigger torch ops registration any import from sony_custom_layers.pytorch</span>
 </span><span id="load_custom_ops-40"><a href="#load_custom_ops-40"><span class="linenos">40</span></a><span class="sd">    is technically sufficient. This is just a dummy api to prevent unused import (e.g. when loading exported pt2 model)</span>
 </span><span id="load_custom_ops-41"><a href="#load_custom_ops-41"><span class="linenos">41</span></a>
-</span><span id="load_custom_ops-42"><a href="#load_custom_ops-42"><span class="linenos">42</span></a><span class="sd">    Usage:</span>
-</span><span id="load_custom_ops-43"><a href="#load_custom_ops-43"><span class="linenos">43</span></a><span class="sd">        # for onnxruntime</span>
+</span><span id="load_custom_ops-42"><a href="#load_custom_ops-42"><span class="linenos">42</span></a><span class="sd">    Example:</span>
+</span><span id="load_custom_ops-43"><a href="#load_custom_ops-43"><span class="linenos">43</span></a><span class="sd">        ```</span>
 </span><span id="load_custom_ops-44"><a href="#load_custom_ops-44"><span class="linenos">44</span></a><span class="sd">        so = load_custom_ops(load_ort=True)</span>
 </span><span id="load_custom_ops-45"><a href="#load_custom_ops-45"><span class="linenos">45</span></a><span class="sd">        session = ort.InferenceSession(model_path, sess_options=so)</span>
 </span><span id="load_custom_ops-46"><a href="#load_custom_ops-46"><span class="linenos">46</span></a><span class="sd">        session.run(...)</span>
-</span><span id="load_custom_ops-47"><a href="#load_custom_ops-47"><span class="linenos">47</span></a>
+</span><span id="load_custom_ops-47"><a href="#load_custom_ops-47"><span class="linenos">47</span></a><span class="sd">        ```</span>
 </span><span id="load_custom_ops-48"><a href="#load_custom_ops-48"><span class="linenos">48</span></a><span class="sd">    Args:</span>
 </span><span id="load_custom_ops-49"><a href="#load_custom_ops-49"><span class="linenos">49</span></a><span class="sd">        load_ort: whether to register the custom ops for onnxruntime.</span>
 </span><span id="load_custom_ops-50"><a href="#load_custom_ops-50"><span class="linenos">50</span></a><span class="sd">        ort_session_ops: SessionOptions object to register the custom ops library on. If None (and &#39;load_ort&#39; is True),</span>
@@ -466,14 +507,13 @@ sets up the SessionOptions object for onnxruntime session.</p>
 <p>Note: this is a must for onnxruntime. To trigger torch ops registration any import from sony_custom_layers.pytorch
 is technically sufficient. This is just a dummy api to prevent unused import (e.g. when loading exported pt2 model)</p>
 
-<h6 id="usage">Usage:</h6>
+<h6 id="example">Example:</h6>
 
 <blockquote>
-  <h1 id="for-onnxruntime">for onnxruntime</h1>
-  
-  <p>so = load_custom_ops(load_ort=True)
-  session = ort.InferenceSession(model_path, sess_options=so)
-  session.run(...)</p>
+<pre><code>so = load_custom_ops(load_ort=True)
+session = ort.InferenceSession(model_path, sess_options=so)
+session.run(...)
+</code></pre>
 </blockquote>
 
 <h6 id="arguments">Arguments:</h6>
