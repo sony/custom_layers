@@ -43,6 +43,8 @@ jobs:
                          --assignee ${{ github.actor }}
             echo Docs are not up to date. Pull Request was created.
             exit 1
+          else
+            echo Docs are up to date.
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
