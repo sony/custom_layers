@@ -38,12 +38,6 @@ def load_custom_ops(load_ort: bool = False,
     Note: this is a must for onnxruntime. To trigger torch ops registration any import from sony_custom_layers.pytorch
     is technically sufficient. This is just a dummy api to prevent unused import (e.g. when loading exported pt2 model)
 
-    Usage:
-        # for onnxruntime
-        so = load_custom_ops(load_ort=True)
-        session = ort.InferenceSession(model_path, sess_options=so)
-        session.run(...)
-
     Args:
         load_ort: whether to register the custom ops for onnxruntime.
         ort_session_ops: SessionOptions object to register the custom ops library on. If None (and 'load_ort' is True),
@@ -51,6 +45,32 @@ def load_custom_ops(load_ort: bool = False,
 
     Returns:
         SessionOptions object if ort registration was requested, otherwise None
+
+    Example:
+        *ONNXRuntime*:
+            ```
+            import onnxruntime as ort
+            from sony_custom_layers.pytorch import load_custom_ops
+
+            so = load_custom_ops(load_ort=True)
+            session = ort.InferenceSession(model_path, sess_options=so)
+            session.run(...)
+            ```
+            You can also pass your own SessionOptions object upon which to register the custom ops
+            ```
+            load_custom_ops(ort_session_options=so)
+            ```
+
+        *PT2 model*:<br>
+            If sony_custom_layers.pytorch is already imported no action is needed. Otherwise, you can use:
+
+            ```
+            from sony_custom_layers.pytorch import load_custom_ops
+            load_custom_ops()
+
+            prog = torch.export.load(model_path)
+            y = prog.module()(x)
+            ```
     """
     if load_ort or ort_session_ops:
         validate_pip_requirements(requirements['torch_ort'])

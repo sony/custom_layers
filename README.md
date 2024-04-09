@@ -5,7 +5,11 @@ Sony Custom Layers (SCL) is an open-source project implementing detection post p
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-- [Implemented Layers](#implemented-layers)
+  - [Installation](#installation)
+  - [Supported Versions](#supported-versions)
+- [API](#api)
+  - [TensorFlow API](#tensorflow-api)
+  - [PyTorch API](#pytorch-api)
 - [License](#license)
 
 
@@ -47,51 +51,23 @@ pip install sony-custom-layers[torch]
 |--------------------------------------------------------------------------------------------------------------------------|---------------------------|---------------------------------------------------------------------------------|
 | torch 2.0-2.2<br/>torchvision 0.15-0.17<br/>onnxruntime 1.15-1.17<br/>onnxruntime_extensions 0.8-0.10<br/>onnx 1.14-1.15 | 3.8-3.11                  | .onnx (via torch.onnx.export)<br/>.pt2 (via torch.export.export, torch2.2 only) |
 
-## Implemented Layers
-SCL currently includes implementations of the following layers:
-### TensorFlow
+## API
+For sony-custom-layers API see https://sony.github.io/custom_layers
 
-| **Layer Name**      | **Description**                                      | **API documentation**     |
-|---------------------|---------------------------------------------|---------------------------|
-| FasterRCNNBoxDecode | Box decoding per [Faster R-CNN](https://arxiv.org/abs/1506.01497) with clipping |  [doc](./sony_custom_layers/keras/object_detection/ssd_pp.md)              |            
-| SSDPostProcess      | Post process as described in [SSD: Single Shot MultiBox Detector](https://arxiv.org/abs/1512.02325)  |[doc](./sony_custom_layers/keras/object_detection/faster_rcnn_box_decode.md)                | 
+### TensorFlow API
+For TensorFlow layers see
+[KerasAPI](https://sony.github.io/custom_layers/sony_custom_layers/keras.html)
 
-### PyTorch
-| **Op/Layer Name** | **Description**                                                                                      | **API documentation**                                                  |
-|-------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
-| multiclass_nms    | Multi-class non-maximum suppression  | [doc](./sony_custom_layers/pytorch/object_detection/multiclass_nms.md) |            
+To load a model with custom layers in TensorFlow, see [custom_layers_scope](https://sony.github.io/custom_layers/sony_custom_layers/keras.html#custom_layers_scope)
 
-## Loading the model
-### TensorFlow
-```
-with sony_custom_layers.keras.custom_layers_scope():
-    model = tf.keras.models.load_model(path)
-```
-See [source](sony_custom_layers/keras/custom_objects.py) for further details.
-### PyTorch
-#### ONNX 
-No special handling is required for torch.onnx.export and onnx.load  
-To enable OnnxRuntime inference:
-```
-import onnxruntime as ort
+### PyTorch API
+For PyTorch layers see
+[PyTorchAPI](https://sony.github.io/custom_layers/sony_custom_layers/pytorch.html)
 
-from sony_custom_layers.pytorch import load_custom_ops
+No special handling is required for torch.onnx.export and onnx.load.
 
-so = load_custom_ops(load_ort=True)
-session = ort.InferenceSession(model_path, sess_options=so)
-session.run(...)
-```
-Alternatively, you can pass your own SessionOptions object upon which to register the custom ops
-```
-load_custom_ops(ort_session_options=so)
-```
-#### PT2
-To load a model exported by torch.export.export:
-```
-from sony_custom_layers.pytorch import load_custom_ops
-load_custom_ops()
-m = torch.export.load(model_path)
-```
+For OnnxRuntime / PT2 support see [load_custom_ops](https://sony.github.io/custom_layers/sony_custom_layers/pytorch.html#load_custom_ops) 
+
 ## License
 [Apache License 2.0](LICENSE.md).
 
