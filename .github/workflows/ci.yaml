@@ -88,25 +88,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # NOTE if newer versions are added, update sony_custom_layers.__init__ pinned_requirements!!!
+        # Test selected versions combinations as following:
+        # * latest/earliest torch+torchvision X latest/earliest ort X latest/earliest ort-ext
+        # * each remaining version is covered by at least one test
+        # !!!NOTE!!! if newer versions are added, update sony_custom_layers.__init__ pinned_requirements
         py_ver: [ "3.8", "3.9", "3.10", "3.11" ]
         torch_ver: ["2.0", "2.1", "2.2"]
-        ort_ver: ["1.15", "1.16", "1.17"]
-        ort_ext_ver: ["0.8", "0.9", "0.10"]
+        ort_ver: ["1.15", "1.17"]
+        ort_ext_ver: ["0.8", "0.10"]
+        exclude:
+          - py_ver: "3.11"    # incompatible versions
+            ort_ext_ver: "0.8"    
         include:
+          # torchvision ver is coupled to a specific torch ver
           - torch_ver: "2.2"
             torchvision_ver: "0.17"
-            onnx_ver: "1.15"
+            onnx_ver: "1.14"
           - torch_ver: "2.1"
             torchvision_ver: "0.16"
-            onnx_ver: "1.14"
+            onnx_ver: "1.15"
           - torch_ver: "2.0"
             torchvision_ver: "0.15"
             onnx_ver: "1.15"
-
-        exclude:
+          # non-covered versions (ort, ort-ext)
           - py_ver: "3.11"
-            ort_ext_ver: "0.8"
+            torch_ver: "2.1"
+            torchvision_ver: "0.16"
+            ort_ver: "1.16"
+            ort_ext_ver: "0.9"
+            onnx_ver: "1.14"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -117,14 +128,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install torch==${{matrix.torch_ver}}.* \
-                      torchvision==${{matrix.torchvision_ver}}.* \
-                      onnxruntime==${{matrix.ort_ver}}.* \
+                      torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
+          pip install onnxruntime==${{matrix.ort_ver}}.* \
                       onnxruntime_extensions==${{matrix.ort_ext_ver}}.* \
                       onnx==${{matrix.onnx_ver}}.* \
-                      --index-url https://download.pytorch.org/whl/cpu \
-                      --extra-index-url https://pypi.org/simple
-
-          pip install -r requirements_test.txt
+                      -r ./requirements_test.txt
+          pip check
           pip list
       - name: Run pytest
         run: |
@@ -182,11 +191,9 @@ jobs:
 
       - name: Publish package pypi
         shell: bash
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
           pip install twine
-          echo "event_name is ${{ github.event_name }}"
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            twine upload --repository pypi dist/* -u __token__ -p ${{ secrets.PYPI_API_KEY }}
-            git tag ${{ env.new_tag }}
-            git push origin ${{ env.new_tag }}
-          fi
+          twine upload --repository pypi dist/* -u __token__ -p ${{ secrets.PYPI_API_KEY }}
+          git tag ${{ env.new_tag }}
+          git push origin ${{ env.new_tag }}
