@@ -120,61 +120,62 @@ sony_custom_layers<wbr>.pytorch    </h1>
 </span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a><span class="k">def</span> <span class="nf">load_custom_ops</span><span class="p">(</span><span class="n">load_ort</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 </span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a>                    <span class="n">ort_session_ops</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;ort.SessionOptions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;ort.SessionOptions&#39;</span><span class="p">]:</span>
 </span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a><span class="sd">    Load custom ops for torch and, optionally, for onnxruntime.</span>
-</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a><span class="sd">    If &#39;load_ort&#39; is True or &#39;ort_session_ops&#39; is passed, registers the custom ops implementation for onnxruntime, and</span>
-</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a><span class="sd">    sets up the SessionOptions object for onnxruntime session.</span>
+</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a><span class="sd">    Note: this must be run before inferring a model with SCL in onnxruntime.</span>
+</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a><span class="sd">    To trigger ops registration in torch any import from sony_custom_layers.pytorch is technically sufficient,</span>
+</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a><span class="sd">    In which case this is just a dummy API to prevent unused import (e.g. when loading exported pt2 model)</span>
 </span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a>
-</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a><span class="sd">    Note: this is a must for onnxruntime. To trigger torch ops registration any import from sony_custom_layers.pytorch</span>
-</span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a><span class="sd">    is technically sufficient. This is just a dummy api to prevent unused import (e.g. when loading exported pt2 model)</span>
-</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a>
-</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a><span class="sd">    Args:</span>
-</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a><span class="sd">        load_ort: whether to register the custom ops for onnxruntime.</span>
-</span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a><span class="sd">        ort_session_ops: SessionOptions object to register the custom ops library on. If None (and &#39;load_ort&#39; is True),</span>
-</span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a><span class="sd">                        creates a new object.</span>
-</span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a>
-</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a><span class="sd">    Returns:</span>
-</span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a><span class="sd">        SessionOptions object if ort registration was requested, otherwise None</span>
-</span><span id="L-48"><a href="#L-48"><span class="linenos">48</span></a>
-</span><span id="L-49"><a href="#L-49"><span class="linenos">49</span></a><span class="sd">    Example:</span>
-</span><span id="L-50"><a href="#L-50"><span class="linenos">50</span></a><span class="sd">        *ONNXRuntime*:</span>
-</span><span id="L-51"><a href="#L-51"><span class="linenos">51</span></a><span class="sd">            ```</span>
-</span><span id="L-52"><a href="#L-52"><span class="linenos">52</span></a><span class="sd">            import onnxruntime as ort</span>
-</span><span id="L-53"><a href="#L-53"><span class="linenos">53</span></a><span class="sd">            from sony_custom_layers.pytorch import load_custom_ops</span>
-</span><span id="L-54"><a href="#L-54"><span class="linenos">54</span></a>
-</span><span id="L-55"><a href="#L-55"><span class="linenos">55</span></a><span class="sd">            so = load_custom_ops(load_ort=True)</span>
-</span><span id="L-56"><a href="#L-56"><span class="linenos">56</span></a><span class="sd">            session = ort.InferenceSession(model_path, sess_options=so)</span>
-</span><span id="L-57"><a href="#L-57"><span class="linenos">57</span></a><span class="sd">            session.run(...)</span>
-</span><span id="L-58"><a href="#L-58"><span class="linenos">58</span></a><span class="sd">            ```</span>
-</span><span id="L-59"><a href="#L-59"><span class="linenos">59</span></a><span class="sd">            You can also pass your own SessionOptions object upon which to register the custom ops</span>
-</span><span id="L-60"><a href="#L-60"><span class="linenos">60</span></a><span class="sd">            ```</span>
-</span><span id="L-61"><a href="#L-61"><span class="linenos">61</span></a><span class="sd">            load_custom_ops(ort_session_options=so)</span>
-</span><span id="L-62"><a href="#L-62"><span class="linenos">62</span></a><span class="sd">            ```</span>
-</span><span id="L-63"><a href="#L-63"><span class="linenos">63</span></a>
-</span><span id="L-64"><a href="#L-64"><span class="linenos">64</span></a><span class="sd">        *PT2 model*:&lt;br&gt;</span>
-</span><span id="L-65"><a href="#L-65"><span class="linenos">65</span></a><span class="sd">            If sony_custom_layers.pytorch is already imported no action is needed. Otherwise, you can use:</span>
-</span><span id="L-66"><a href="#L-66"><span class="linenos">66</span></a>
-</span><span id="L-67"><a href="#L-67"><span class="linenos">67</span></a><span class="sd">            ```</span>
-</span><span id="L-68"><a href="#L-68"><span class="linenos">68</span></a><span class="sd">            from sony_custom_layers.pytorch import load_custom_ops</span>
-</span><span id="L-69"><a href="#L-69"><span class="linenos">69</span></a><span class="sd">            load_custom_ops()</span>
-</span><span id="L-70"><a href="#L-70"><span class="linenos">70</span></a>
-</span><span id="L-71"><a href="#L-71"><span class="linenos">71</span></a><span class="sd">            prog = torch.export.load(model_path)</span>
-</span><span id="L-72"><a href="#L-72"><span class="linenos">72</span></a><span class="sd">            y = prog.module()(x)</span>
-</span><span id="L-73"><a href="#L-73"><span class="linenos">73</span></a><span class="sd">            ```</span>
-</span><span id="L-74"><a href="#L-74"><span class="linenos">74</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-75"><a href="#L-75"><span class="linenos">75</span></a>    <span class="k">if</span> <span class="n">load_ort</span> <span class="ow">or</span> <span class="n">ort_session_ops</span><span class="p">:</span>
-</span><span id="L-76"><a href="#L-76"><span class="linenos">76</span></a>        <span class="n">validate_pip_requirements</span><span class="p">(</span><span class="n">requirements</span><span class="p">[</span><span class="s1">&#39;torch_ort&#39;</span><span class="p">])</span>
-</span><span id="L-77"><a href="#L-77"><span class="linenos">77</span></a>
-</span><span id="L-78"><a href="#L-78"><span class="linenos">78</span></a>        <span class="c1"># trigger onnxruntime op registration</span>
-</span><span id="L-79"><a href="#L-79"><span class="linenos">79</span></a>        <span class="kn">from</span> <span class="nn">.object_detection</span> <span class="kn">import</span> <span class="n">nms_ort</span>
-</span><span id="L-80"><a href="#L-80"><span class="linenos">80</span></a>
-</span><span id="L-81"><a href="#L-81"><span class="linenos">81</span></a>        <span class="kn">from</span> <span class="nn">onnxruntime_extensions</span> <span class="kn">import</span> <span class="n">get_library_path</span>
-</span><span id="L-82"><a href="#L-82"><span class="linenos">82</span></a>        <span class="kn">from</span> <span class="nn">onnxruntime</span> <span class="kn">import</span> <span class="n">SessionOptions</span>
-</span><span id="L-83"><a href="#L-83"><span class="linenos">83</span></a>        <span class="n">ort_session_ops</span> <span class="o">=</span> <span class="n">ort_session_ops</span> <span class="ow">or</span> <span class="n">SessionOptions</span><span class="p">()</span>
-</span><span id="L-84"><a href="#L-84"><span class="linenos">84</span></a>        <span class="n">ort_session_ops</span><span class="o">.</span><span class="n">register_custom_ops_library</span><span class="p">(</span><span class="n">get_library_path</span><span class="p">())</span>
-</span><span id="L-85"><a href="#L-85"><span class="linenos">85</span></a>        <span class="k">return</span> <span class="n">ort_session_ops</span>
-</span><span id="L-86"><a href="#L-86"><span class="linenos">86</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="L-87"><a href="#L-87"><span class="linenos">87</span></a>        <span class="c1"># nothing really to do after import was triggered</span>
-</span><span id="L-88"><a href="#L-88"><span class="linenos">88</span></a>        <span class="k">return</span> <span class="kc">None</span>
+</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a><span class="sd">    Load custom ops for torch and, optionally, for onnxruntime.</span>
+</span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a><span class="sd">    If &#39;load_ort&#39; is True or &#39;ort_session_ops&#39; is passed, registers the custom ops implementation for onnxruntime, and</span>
+</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a><span class="sd">    sets up the SessionOptions object for onnxruntime session.</span>
+</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a>
+</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a><span class="sd">    Args:</span>
+</span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a><span class="sd">        load_ort: whether to register the custom ops for onnxruntime.</span>
+</span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a><span class="sd">        ort_session_ops: SessionOptions object to register the custom ops library on. If None (and &#39;load_ort&#39; is True),</span>
+</span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a><span class="sd">                        creates a new object.</span>
+</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a>
+</span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a><span class="sd">    Returns:</span>
+</span><span id="L-48"><a href="#L-48"><span class="linenos">48</span></a><span class="sd">        SessionOptions object if ort registration was requested, otherwise None</span>
+</span><span id="L-49"><a href="#L-49"><span class="linenos">49</span></a>
+</span><span id="L-50"><a href="#L-50"><span class="linenos">50</span></a><span class="sd">    Example:</span>
+</span><span id="L-51"><a href="#L-51"><span class="linenos">51</span></a><span class="sd">        *ONNXRuntime*:</span>
+</span><span id="L-52"><a href="#L-52"><span class="linenos">52</span></a><span class="sd">            ```</span>
+</span><span id="L-53"><a href="#L-53"><span class="linenos">53</span></a><span class="sd">            import onnxruntime as ort</span>
+</span><span id="L-54"><a href="#L-54"><span class="linenos">54</span></a><span class="sd">            from sony_custom_layers.pytorch import load_custom_ops</span>
+</span><span id="L-55"><a href="#L-55"><span class="linenos">55</span></a>
+</span><span id="L-56"><a href="#L-56"><span class="linenos">56</span></a><span class="sd">            so = load_custom_ops(load_ort=True)</span>
+</span><span id="L-57"><a href="#L-57"><span class="linenos">57</span></a><span class="sd">            session = ort.InferenceSession(model_path, sess_options=so)</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos">58</span></a><span class="sd">            session.run(...)</span>
+</span><span id="L-59"><a href="#L-59"><span class="linenos">59</span></a><span class="sd">            ```</span>
+</span><span id="L-60"><a href="#L-60"><span class="linenos">60</span></a><span class="sd">            You can also pass your own SessionOptions object upon which to register the custom ops</span>
+</span><span id="L-61"><a href="#L-61"><span class="linenos">61</span></a><span class="sd">            ```</span>
+</span><span id="L-62"><a href="#L-62"><span class="linenos">62</span></a><span class="sd">            load_custom_ops(ort_session_options=so)</span>
+</span><span id="L-63"><a href="#L-63"><span class="linenos">63</span></a><span class="sd">            ```</span>
+</span><span id="L-64"><a href="#L-64"><span class="linenos">64</span></a>
+</span><span id="L-65"><a href="#L-65"><span class="linenos">65</span></a><span class="sd">        *PT2 model*:&lt;br&gt;</span>
+</span><span id="L-66"><a href="#L-66"><span class="linenos">66</span></a><span class="sd">            If sony_custom_layers.pytorch is already imported no action is needed. Otherwise, you can use:</span>
+</span><span id="L-67"><a href="#L-67"><span class="linenos">67</span></a>
+</span><span id="L-68"><a href="#L-68"><span class="linenos">68</span></a><span class="sd">            ```</span>
+</span><span id="L-69"><a href="#L-69"><span class="linenos">69</span></a><span class="sd">            from sony_custom_layers.pytorch import load_custom_ops</span>
+</span><span id="L-70"><a href="#L-70"><span class="linenos">70</span></a><span class="sd">            load_custom_ops()</span>
+</span><span id="L-71"><a href="#L-71"><span class="linenos">71</span></a>
+</span><span id="L-72"><a href="#L-72"><span class="linenos">72</span></a><span class="sd">            prog = torch.export.load(model_path)</span>
+</span><span id="L-73"><a href="#L-73"><span class="linenos">73</span></a><span class="sd">            y = prog.module()(x)</span>
+</span><span id="L-74"><a href="#L-74"><span class="linenos">74</span></a><span class="sd">            ```</span>
+</span><span id="L-75"><a href="#L-75"><span class="linenos">75</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-76"><a href="#L-76"><span class="linenos">76</span></a>    <span class="k">if</span> <span class="n">load_ort</span> <span class="ow">or</span> <span class="n">ort_session_ops</span><span class="p">:</span>
+</span><span id="L-77"><a href="#L-77"><span class="linenos">77</span></a>        <span class="n">validate_pip_requirements</span><span class="p">(</span><span class="n">requirements</span><span class="p">[</span><span class="s1">&#39;torch_ort&#39;</span><span class="p">])</span>
+</span><span id="L-78"><a href="#L-78"><span class="linenos">78</span></a>
+</span><span id="L-79"><a href="#L-79"><span class="linenos">79</span></a>        <span class="c1"># trigger onnxruntime op registration</span>
+</span><span id="L-80"><a href="#L-80"><span class="linenos">80</span></a>        <span class="kn">from</span> <span class="nn">.object_detection</span> <span class="kn">import</span> <span class="n">nms_ort</span>
+</span><span id="L-81"><a href="#L-81"><span class="linenos">81</span></a>
+</span><span id="L-82"><a href="#L-82"><span class="linenos">82</span></a>        <span class="kn">from</span> <span class="nn">onnxruntime_extensions</span> <span class="kn">import</span> <span class="n">get_library_path</span>
+</span><span id="L-83"><a href="#L-83"><span class="linenos">83</span></a>        <span class="kn">from</span> <span class="nn">onnxruntime</span> <span class="kn">import</span> <span class="n">SessionOptions</span>
+</span><span id="L-84"><a href="#L-84"><span class="linenos">84</span></a>        <span class="n">ort_session_ops</span> <span class="o">=</span> <span class="n">ort_session_ops</span> <span class="ow">or</span> <span class="n">SessionOptions</span><span class="p">()</span>
+</span><span id="L-85"><a href="#L-85"><span class="linenos">85</span></a>        <span class="n">ort_session_ops</span><span class="o">.</span><span class="n">register_custom_ops_library</span><span class="p">(</span><span class="n">get_library_path</span><span class="p">())</span>
+</span><span id="L-86"><a href="#L-86"><span class="linenos">86</span></a>        <span class="k">return</span> <span class="n">ort_session_ops</span>
+</span><span id="L-87"><a href="#L-87"><span class="linenos">87</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="L-88"><a href="#L-88"><span class="linenos">88</span></a>        <span class="c1"># nothing really to do after import was triggered</span>
+</span><span id="L-89"><a href="#L-89"><span class="linenos">89</span></a>        <span class="k">return</span> <span class="kc">None</span>
 </span></pre></div>
 
 
@@ -457,16 +458,6 @@ res = multiclass_nms(boxes,
 
 
                             </div>
-                            <div class="inherited">
-                                <h5>Inherited Members</h5>
-                                <dl>
-                                    <div><dt>builtins.tuple</dt>
-                                <dd id="NMSResults.index" class="function">index</dd>
-                <dd id="NMSResults.count" class="function">count</dd>
-
-            </div>
-                                </dl>
-                            </div>
                 </section>
                 <section id="load_custom_ops">
                             <input id="load_custom_ops-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
@@ -482,70 +473,72 @@ res = multiclass_nms(boxes,
             <div class="pdoc-code codehilite"><pre><span></span><span id="load_custom_ops-32"><a href="#load_custom_ops-32"><span class="linenos">32</span></a><span class="k">def</span> <span class="nf">load_custom_ops</span><span class="p">(</span><span class="n">load_ort</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 </span><span id="load_custom_ops-33"><a href="#load_custom_ops-33"><span class="linenos">33</span></a>                    <span class="n">ort_session_ops</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;ort.SessionOptions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;ort.SessionOptions&#39;</span><span class="p">]:</span>
 </span><span id="load_custom_ops-34"><a href="#load_custom_ops-34"><span class="linenos">34</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="load_custom_ops-35"><a href="#load_custom_ops-35"><span class="linenos">35</span></a><span class="sd">    Load custom ops for torch and, optionally, for onnxruntime.</span>
-</span><span id="load_custom_ops-36"><a href="#load_custom_ops-36"><span class="linenos">36</span></a><span class="sd">    If &#39;load_ort&#39; is True or &#39;ort_session_ops&#39; is passed, registers the custom ops implementation for onnxruntime, and</span>
-</span><span id="load_custom_ops-37"><a href="#load_custom_ops-37"><span class="linenos">37</span></a><span class="sd">    sets up the SessionOptions object for onnxruntime session.</span>
+</span><span id="load_custom_ops-35"><a href="#load_custom_ops-35"><span class="linenos">35</span></a><span class="sd">    Note: this must be run before inferring a model with SCL in onnxruntime.</span>
+</span><span id="load_custom_ops-36"><a href="#load_custom_ops-36"><span class="linenos">36</span></a><span class="sd">    To trigger ops registration in torch any import from sony_custom_layers.pytorch is technically sufficient,</span>
+</span><span id="load_custom_ops-37"><a href="#load_custom_ops-37"><span class="linenos">37</span></a><span class="sd">    In which case this is just a dummy API to prevent unused import (e.g. when loading exported pt2 model)</span>
 </span><span id="load_custom_ops-38"><a href="#load_custom_ops-38"><span class="linenos">38</span></a>
-</span><span id="load_custom_ops-39"><a href="#load_custom_ops-39"><span class="linenos">39</span></a><span class="sd">    Note: this is a must for onnxruntime. To trigger torch ops registration any import from sony_custom_layers.pytorch</span>
-</span><span id="load_custom_ops-40"><a href="#load_custom_ops-40"><span class="linenos">40</span></a><span class="sd">    is technically sufficient. This is just a dummy api to prevent unused import (e.g. when loading exported pt2 model)</span>
-</span><span id="load_custom_ops-41"><a href="#load_custom_ops-41"><span class="linenos">41</span></a>
-</span><span id="load_custom_ops-42"><a href="#load_custom_ops-42"><span class="linenos">42</span></a><span class="sd">    Args:</span>
-</span><span id="load_custom_ops-43"><a href="#load_custom_ops-43"><span class="linenos">43</span></a><span class="sd">        load_ort: whether to register the custom ops for onnxruntime.</span>
-</span><span id="load_custom_ops-44"><a href="#load_custom_ops-44"><span class="linenos">44</span></a><span class="sd">        ort_session_ops: SessionOptions object to register the custom ops library on. If None (and &#39;load_ort&#39; is True),</span>
-</span><span id="load_custom_ops-45"><a href="#load_custom_ops-45"><span class="linenos">45</span></a><span class="sd">                        creates a new object.</span>
-</span><span id="load_custom_ops-46"><a href="#load_custom_ops-46"><span class="linenos">46</span></a>
-</span><span id="load_custom_ops-47"><a href="#load_custom_ops-47"><span class="linenos">47</span></a><span class="sd">    Returns:</span>
-</span><span id="load_custom_ops-48"><a href="#load_custom_ops-48"><span class="linenos">48</span></a><span class="sd">        SessionOptions object if ort registration was requested, otherwise None</span>
-</span><span id="load_custom_ops-49"><a href="#load_custom_ops-49"><span class="linenos">49</span></a>
-</span><span id="load_custom_ops-50"><a href="#load_custom_ops-50"><span class="linenos">50</span></a><span class="sd">    Example:</span>
-</span><span id="load_custom_ops-51"><a href="#load_custom_ops-51"><span class="linenos">51</span></a><span class="sd">        *ONNXRuntime*:</span>
-</span><span id="load_custom_ops-52"><a href="#load_custom_ops-52"><span class="linenos">52</span></a><span class="sd">            ```</span>
-</span><span id="load_custom_ops-53"><a href="#load_custom_ops-53"><span class="linenos">53</span></a><span class="sd">            import onnxruntime as ort</span>
-</span><span id="load_custom_ops-54"><a href="#load_custom_ops-54"><span class="linenos">54</span></a><span class="sd">            from sony_custom_layers.pytorch import load_custom_ops</span>
-</span><span id="load_custom_ops-55"><a href="#load_custom_ops-55"><span class="linenos">55</span></a>
-</span><span id="load_custom_ops-56"><a href="#load_custom_ops-56"><span class="linenos">56</span></a><span class="sd">            so = load_custom_ops(load_ort=True)</span>
-</span><span id="load_custom_ops-57"><a href="#load_custom_ops-57"><span class="linenos">57</span></a><span class="sd">            session = ort.InferenceSession(model_path, sess_options=so)</span>
-</span><span id="load_custom_ops-58"><a href="#load_custom_ops-58"><span class="linenos">58</span></a><span class="sd">            session.run(...)</span>
-</span><span id="load_custom_ops-59"><a href="#load_custom_ops-59"><span class="linenos">59</span></a><span class="sd">            ```</span>
-</span><span id="load_custom_ops-60"><a href="#load_custom_ops-60"><span class="linenos">60</span></a><span class="sd">            You can also pass your own SessionOptions object upon which to register the custom ops</span>
-</span><span id="load_custom_ops-61"><a href="#load_custom_ops-61"><span class="linenos">61</span></a><span class="sd">            ```</span>
-</span><span id="load_custom_ops-62"><a href="#load_custom_ops-62"><span class="linenos">62</span></a><span class="sd">            load_custom_ops(ort_session_options=so)</span>
-</span><span id="load_custom_ops-63"><a href="#load_custom_ops-63"><span class="linenos">63</span></a><span class="sd">            ```</span>
-</span><span id="load_custom_ops-64"><a href="#load_custom_ops-64"><span class="linenos">64</span></a>
-</span><span id="load_custom_ops-65"><a href="#load_custom_ops-65"><span class="linenos">65</span></a><span class="sd">        *PT2 model*:&lt;br&gt;</span>
-</span><span id="load_custom_ops-66"><a href="#load_custom_ops-66"><span class="linenos">66</span></a><span class="sd">            If sony_custom_layers.pytorch is already imported no action is needed. Otherwise, you can use:</span>
-</span><span id="load_custom_ops-67"><a href="#load_custom_ops-67"><span class="linenos">67</span></a>
-</span><span id="load_custom_ops-68"><a href="#load_custom_ops-68"><span class="linenos">68</span></a><span class="sd">            ```</span>
-</span><span id="load_custom_ops-69"><a href="#load_custom_ops-69"><span class="linenos">69</span></a><span class="sd">            from sony_custom_layers.pytorch import load_custom_ops</span>
-</span><span id="load_custom_ops-70"><a href="#load_custom_ops-70"><span class="linenos">70</span></a><span class="sd">            load_custom_ops()</span>
-</span><span id="load_custom_ops-71"><a href="#load_custom_ops-71"><span class="linenos">71</span></a>
-</span><span id="load_custom_ops-72"><a href="#load_custom_ops-72"><span class="linenos">72</span></a><span class="sd">            prog = torch.export.load(model_path)</span>
-</span><span id="load_custom_ops-73"><a href="#load_custom_ops-73"><span class="linenos">73</span></a><span class="sd">            y = prog.module()(x)</span>
-</span><span id="load_custom_ops-74"><a href="#load_custom_ops-74"><span class="linenos">74</span></a><span class="sd">            ```</span>
-</span><span id="load_custom_ops-75"><a href="#load_custom_ops-75"><span class="linenos">75</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="load_custom_ops-76"><a href="#load_custom_ops-76"><span class="linenos">76</span></a>    <span class="k">if</span> <span class="n">load_ort</span> <span class="ow">or</span> <span class="n">ort_session_ops</span><span class="p">:</span>
-</span><span id="load_custom_ops-77"><a href="#load_custom_ops-77"><span class="linenos">77</span></a>        <span class="n">validate_pip_requirements</span><span class="p">(</span><span class="n">requirements</span><span class="p">[</span><span class="s1">&#39;torch_ort&#39;</span><span class="p">])</span>
-</span><span id="load_custom_ops-78"><a href="#load_custom_ops-78"><span class="linenos">78</span></a>
-</span><span id="load_custom_ops-79"><a href="#load_custom_ops-79"><span class="linenos">79</span></a>        <span class="c1"># trigger onnxruntime op registration</span>
-</span><span id="load_custom_ops-80"><a href="#load_custom_ops-80"><span class="linenos">80</span></a>        <span class="kn">from</span> <span class="nn">.object_detection</span> <span class="kn">import</span> <span class="n">nms_ort</span>
-</span><span id="load_custom_ops-81"><a href="#load_custom_ops-81"><span class="linenos">81</span></a>
-</span><span id="load_custom_ops-82"><a href="#load_custom_ops-82"><span class="linenos">82</span></a>        <span class="kn">from</span> <span class="nn">onnxruntime_extensions</span> <span class="kn">import</span> <span class="n">get_library_path</span>
-</span><span id="load_custom_ops-83"><a href="#load_custom_ops-83"><span class="linenos">83</span></a>        <span class="kn">from</span> <span class="nn">onnxruntime</span> <span class="kn">import</span> <span class="n">SessionOptions</span>
-</span><span id="load_custom_ops-84"><a href="#load_custom_ops-84"><span class="linenos">84</span></a>        <span class="n">ort_session_ops</span> <span class="o">=</span> <span class="n">ort_session_ops</span> <span class="ow">or</span> <span class="n">SessionOptions</span><span class="p">()</span>
-</span><span id="load_custom_ops-85"><a href="#load_custom_ops-85"><span class="linenos">85</span></a>        <span class="n">ort_session_ops</span><span class="o">.</span><span class="n">register_custom_ops_library</span><span class="p">(</span><span class="n">get_library_path</span><span class="p">())</span>
-</span><span id="load_custom_ops-86"><a href="#load_custom_ops-86"><span class="linenos">86</span></a>        <span class="k">return</span> <span class="n">ort_session_ops</span>
-</span><span id="load_custom_ops-87"><a href="#load_custom_ops-87"><span class="linenos">87</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="load_custom_ops-88"><a href="#load_custom_ops-88"><span class="linenos">88</span></a>        <span class="c1"># nothing really to do after import was triggered</span>
-</span><span id="load_custom_ops-89"><a href="#load_custom_ops-89"><span class="linenos">89</span></a>        <span class="k">return</span> <span class="kc">None</span>
+</span><span id="load_custom_ops-39"><a href="#load_custom_ops-39"><span class="linenos">39</span></a><span class="sd">    Load custom ops for torch and, optionally, for onnxruntime.</span>
+</span><span id="load_custom_ops-40"><a href="#load_custom_ops-40"><span class="linenos">40</span></a><span class="sd">    If &#39;load_ort&#39; is True or &#39;ort_session_ops&#39; is passed, registers the custom ops implementation for onnxruntime, and</span>
+</span><span id="load_custom_ops-41"><a href="#load_custom_ops-41"><span class="linenos">41</span></a><span class="sd">    sets up the SessionOptions object for onnxruntime session.</span>
+</span><span id="load_custom_ops-42"><a href="#load_custom_ops-42"><span class="linenos">42</span></a>
+</span><span id="load_custom_ops-43"><a href="#load_custom_ops-43"><span class="linenos">43</span></a><span class="sd">    Args:</span>
+</span><span id="load_custom_ops-44"><a href="#load_custom_ops-44"><span class="linenos">44</span></a><span class="sd">        load_ort: whether to register the custom ops for onnxruntime.</span>
+</span><span id="load_custom_ops-45"><a href="#load_custom_ops-45"><span class="linenos">45</span></a><span class="sd">        ort_session_ops: SessionOptions object to register the custom ops library on. If None (and &#39;load_ort&#39; is True),</span>
+</span><span id="load_custom_ops-46"><a href="#load_custom_ops-46"><span class="linenos">46</span></a><span class="sd">                        creates a new object.</span>
+</span><span id="load_custom_ops-47"><a href="#load_custom_ops-47"><span class="linenos">47</span></a>
+</span><span id="load_custom_ops-48"><a href="#load_custom_ops-48"><span class="linenos">48</span></a><span class="sd">    Returns:</span>
+</span><span id="load_custom_ops-49"><a href="#load_custom_ops-49"><span class="linenos">49</span></a><span class="sd">        SessionOptions object if ort registration was requested, otherwise None</span>
+</span><span id="load_custom_ops-50"><a href="#load_custom_ops-50"><span class="linenos">50</span></a>
+</span><span id="load_custom_ops-51"><a href="#load_custom_ops-51"><span class="linenos">51</span></a><span class="sd">    Example:</span>
+</span><span id="load_custom_ops-52"><a href="#load_custom_ops-52"><span class="linenos">52</span></a><span class="sd">        *ONNXRuntime*:</span>
+</span><span id="load_custom_ops-53"><a href="#load_custom_ops-53"><span class="linenos">53</span></a><span class="sd">            ```</span>
+</span><span id="load_custom_ops-54"><a href="#load_custom_ops-54"><span class="linenos">54</span></a><span class="sd">            import onnxruntime as ort</span>
+</span><span id="load_custom_ops-55"><a href="#load_custom_ops-55"><span class="linenos">55</span></a><span class="sd">            from sony_custom_layers.pytorch import load_custom_ops</span>
+</span><span id="load_custom_ops-56"><a href="#load_custom_ops-56"><span class="linenos">56</span></a>
+</span><span id="load_custom_ops-57"><a href="#load_custom_ops-57"><span class="linenos">57</span></a><span class="sd">            so = load_custom_ops(load_ort=True)</span>
+</span><span id="load_custom_ops-58"><a href="#load_custom_ops-58"><span class="linenos">58</span></a><span class="sd">            session = ort.InferenceSession(model_path, sess_options=so)</span>
+</span><span id="load_custom_ops-59"><a href="#load_custom_ops-59"><span class="linenos">59</span></a><span class="sd">            session.run(...)</span>
+</span><span id="load_custom_ops-60"><a href="#load_custom_ops-60"><span class="linenos">60</span></a><span class="sd">            ```</span>
+</span><span id="load_custom_ops-61"><a href="#load_custom_ops-61"><span class="linenos">61</span></a><span class="sd">            You can also pass your own SessionOptions object upon which to register the custom ops</span>
+</span><span id="load_custom_ops-62"><a href="#load_custom_ops-62"><span class="linenos">62</span></a><span class="sd">            ```</span>
+</span><span id="load_custom_ops-63"><a href="#load_custom_ops-63"><span class="linenos">63</span></a><span class="sd">            load_custom_ops(ort_session_options=so)</span>
+</span><span id="load_custom_ops-64"><a href="#load_custom_ops-64"><span class="linenos">64</span></a><span class="sd">            ```</span>
+</span><span id="load_custom_ops-65"><a href="#load_custom_ops-65"><span class="linenos">65</span></a>
+</span><span id="load_custom_ops-66"><a href="#load_custom_ops-66"><span class="linenos">66</span></a><span class="sd">        *PT2 model*:&lt;br&gt;</span>
+</span><span id="load_custom_ops-67"><a href="#load_custom_ops-67"><span class="linenos">67</span></a><span class="sd">            If sony_custom_layers.pytorch is already imported no action is needed. Otherwise, you can use:</span>
+</span><span id="load_custom_ops-68"><a href="#load_custom_ops-68"><span class="linenos">68</span></a>
+</span><span id="load_custom_ops-69"><a href="#load_custom_ops-69"><span class="linenos">69</span></a><span class="sd">            ```</span>
+</span><span id="load_custom_ops-70"><a href="#load_custom_ops-70"><span class="linenos">70</span></a><span class="sd">            from sony_custom_layers.pytorch import load_custom_ops</span>
+</span><span id="load_custom_ops-71"><a href="#load_custom_ops-71"><span class="linenos">71</span></a><span class="sd">            load_custom_ops()</span>
+</span><span id="load_custom_ops-72"><a href="#load_custom_ops-72"><span class="linenos">72</span></a>
+</span><span id="load_custom_ops-73"><a href="#load_custom_ops-73"><span class="linenos">73</span></a><span class="sd">            prog = torch.export.load(model_path)</span>
+</span><span id="load_custom_ops-74"><a href="#load_custom_ops-74"><span class="linenos">74</span></a><span class="sd">            y = prog.module()(x)</span>
+</span><span id="load_custom_ops-75"><a href="#load_custom_ops-75"><span class="linenos">75</span></a><span class="sd">            ```</span>
+</span><span id="load_custom_ops-76"><a href="#load_custom_ops-76"><span class="linenos">76</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="load_custom_ops-77"><a href="#load_custom_ops-77"><span class="linenos">77</span></a>    <span class="k">if</span> <span class="n">load_ort</span> <span class="ow">or</span> <span class="n">ort_session_ops</span><span class="p">:</span>
+</span><span id="load_custom_ops-78"><a href="#load_custom_ops-78"><span class="linenos">78</span></a>        <span class="n">validate_pip_requirements</span><span class="p">(</span><span class="n">requirements</span><span class="p">[</span><span class="s1">&#39;torch_ort&#39;</span><span class="p">])</span>
+</span><span id="load_custom_ops-79"><a href="#load_custom_ops-79"><span class="linenos">79</span></a>
+</span><span id="load_custom_ops-80"><a href="#load_custom_ops-80"><span class="linenos">80</span></a>        <span class="c1"># trigger onnxruntime op registration</span>
+</span><span id="load_custom_ops-81"><a href="#load_custom_ops-81"><span class="linenos">81</span></a>        <span class="kn">from</span> <span class="nn">.object_detection</span> <span class="kn">import</span> <span class="n">nms_ort</span>
+</span><span id="load_custom_ops-82"><a href="#load_custom_ops-82"><span class="linenos">82</span></a>
+</span><span id="load_custom_ops-83"><a href="#load_custom_ops-83"><span class="linenos">83</span></a>        <span class="kn">from</span> <span class="nn">onnxruntime_extensions</span> <span class="kn">import</span> <span class="n">get_library_path</span>
+</span><span id="load_custom_ops-84"><a href="#load_custom_ops-84"><span class="linenos">84</span></a>        <span class="kn">from</span> <span class="nn">onnxruntime</span> <span class="kn">import</span> <span class="n">SessionOptions</span>
+</span><span id="load_custom_ops-85"><a href="#load_custom_ops-85"><span class="linenos">85</span></a>        <span class="n">ort_session_ops</span> <span class="o">=</span> <span class="n">ort_session_ops</span> <span class="ow">or</span> <span class="n">SessionOptions</span><span class="p">()</span>
+</span><span id="load_custom_ops-86"><a href="#load_custom_ops-86"><span class="linenos">86</span></a>        <span class="n">ort_session_ops</span><span class="o">.</span><span class="n">register_custom_ops_library</span><span class="p">(</span><span class="n">get_library_path</span><span class="p">())</span>
+</span><span id="load_custom_ops-87"><a href="#load_custom_ops-87"><span class="linenos">87</span></a>        <span class="k">return</span> <span class="n">ort_session_ops</span>
+</span><span id="load_custom_ops-88"><a href="#load_custom_ops-88"><span class="linenos">88</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="load_custom_ops-89"><a href="#load_custom_ops-89"><span class="linenos">89</span></a>        <span class="c1"># nothing really to do after import was triggered</span>
+</span><span id="load_custom_ops-90"><a href="#load_custom_ops-90"><span class="linenos">90</span></a>        <span class="k">return</span> <span class="kc">None</span>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Load custom ops for torch and, optionally, for onnxruntime.
+            <div class="docstring"><p>Note: this must be run before inferring a model with SCL in onnxruntime.
+To trigger ops registration in torch any import from sony_custom_layers.pytorch is technically sufficient,
+In which case this is just a dummy API to prevent unused import (e.g. when loading exported pt2 model)</p>
+
+<p>Load custom ops for torch and, optionally, for onnxruntime.
 If 'load_ort' is True or 'ort_session_ops' is passed, registers the custom ops implementation for onnxruntime, and
 sets up the SessionOptions object for onnxruntime session.</p>
-
-<p>Note: this is a must for onnxruntime. To trigger torch ops registration any import from sony_custom_layers.pytorch
-is technically sufficient. This is just a dummy api to prevent unused import (e.g. when loading exported pt2 model)</p>
 
 <h6 id="arguments">Arguments:</h6>
 
