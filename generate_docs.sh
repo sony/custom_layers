@@ -29,7 +29,7 @@ fi
 
 echo Generating docs
 cd $ROOT
-pdoc --docformat google -o $DOCS_DIR ./sony_custom_layers/{keras,pytorch} --no-include-undocumented --no-search --show-inherited-members false
+pdoc --docformat google -o $DOCS_DIR ./sony_custom_layers/{keras,pytorch} --no-include-undocumented --no-search
 
 if [ "$ENV_DIR" ];then
   echo Removing $ENV_DIR
