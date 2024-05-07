@@ -31,12 +31,12 @@ from .object_detection import multiclass_nms, NMSResults    # noqa: E402
 def load_custom_ops(load_ort: bool = False,
                     ort_session_ops: Optional['ort.SessionOptions'] = None) -> Optional['ort.SessionOptions']:
     """
+    Note: this must be run before inferring a model with SCL in onnxruntime. To trigger ops registration in torch any import from sony_custom_layers.pytorch
+    is technically sufficient, In which case this is just a dummy API to prevent unused import (e.g. when loading exported pt2 model)
+    
     Load custom ops for torch and, optionally, for onnxruntime.
     If 'load_ort' is True or 'ort_session_ops' is passed, registers the custom ops implementation for onnxruntime, and
     sets up the SessionOptions object for onnxruntime session.
-
-    Note: this is a must for onnxruntime. To trigger torch ops registration any import from sony_custom_layers.pytorch
-    is technically sufficient. This is just a dummy api to prevent unused import (e.g. when loading exported pt2 model)
 
     Args:
         load_ort: whether to register the custom ops for onnxruntime.
