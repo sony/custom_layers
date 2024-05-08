@@ -15,15 +15,15 @@
 # -----------------------------------------------------------------------------
 from typing import Optional, TYPE_CHECKING
 
-from sony_custom_layers.util.import_util import validate_pip_requirements
-from sony_custom_layers import requirements
+from sony_custom_layers.util.import_util import validate_installed_libraries
+from sony_custom_layers import required_libraries
 
 if TYPE_CHECKING:
     import onnxruntime as ort
 
 __all__ = ['multiclass_nms', 'NMSResults', 'load_custom_ops']
 
-validate_pip_requirements(requirements['torch'])
+validate_installed_libraries(required_libraries['torch'])
 
 from .object_detection import multiclass_nms, NMSResults    # noqa: E402
 
@@ -74,7 +74,7 @@ def load_custom_ops(load_ort: bool = False,
             ```
     """
     if load_ort or ort_session_ops:
-        validate_pip_requirements(requirements['torch_ort'])
+        validate_installed_libraries(required_libraries['torch_ort'])
 
         # trigger onnxruntime op registration
         from .object_detection import nms_ort
