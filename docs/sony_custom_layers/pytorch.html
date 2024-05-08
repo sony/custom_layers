@@ -104,15 +104,15 @@ sony_custom_layers<wbr>.pytorch    </h1>
 </span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="c1"># -----------------------------------------------------------------------------</span>
 </span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
 </span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="kn">from</span> <span class="nn">sony_custom_layers.util.import_util</span> <span class="kn">import</span> <span class="n">validate_pip_requirements</span>
-</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a><span class="kn">from</span> <span class="nn">sony_custom_layers</span> <span class="kn">import</span> <span class="n">requirements</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="kn">from</span> <span class="nn">sony_custom_layers.util.import_util</span> <span class="kn">import</span> <span class="n">validate_installed_libraries</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a><span class="kn">from</span> <span class="nn">sony_custom_layers</span> <span class="kn">import</span> <span class="n">required_libraries</span>
 </span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a>
 </span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
 </span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a>    <span class="kn">import</span> <span class="nn">onnxruntime</span> <span class="k">as</span> <span class="nn">ort</span>
 </span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a>
 </span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;multiclass_nms&#39;</span><span class="p">,</span> <span class="s1">&#39;NMSResults&#39;</span><span class="p">,</span> <span class="s1">&#39;load_custom_ops&#39;</span><span class="p">]</span>
 </span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a>
-</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a><span class="n">validate_pip_requirements</span><span class="p">(</span><span class="n">requirements</span><span class="p">[</span><span class="s1">&#39;torch&#39;</span><span class="p">])</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a><span class="n">validate_installed_libraries</span><span class="p">(</span><span class="n">required_libraries</span><span class="p">[</span><span class="s1">&#39;torch&#39;</span><span class="p">])</span>
 </span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a>
 </span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a><span class="kn">from</span> <span class="nn">.object_detection</span> <span class="kn">import</span> <span class="n">multiclass_nms</span><span class="p">,</span> <span class="n">NMSResults</span>    <span class="c1"># noqa: E402</span>
 </span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a>
@@ -163,7 +163,7 @@ sony_custom_layers<wbr>.pytorch    </h1>
 </span><span id="L-74"><a href="#L-74"><span class="linenos">74</span></a><span class="sd">            ```</span>
 </span><span id="L-75"><a href="#L-75"><span class="linenos">75</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="L-76"><a href="#L-76"><span class="linenos">76</span></a>    <span class="k">if</span> <span class="n">load_ort</span> <span class="ow">or</span> <span class="n">ort_session_ops</span><span class="p">:</span>
-</span><span id="L-77"><a href="#L-77"><span class="linenos">77</span></a>        <span class="n">validate_pip_requirements</span><span class="p">(</span><span class="n">requirements</span><span class="p">[</span><span class="s1">&#39;torch_ort&#39;</span><span class="p">])</span>
+</span><span id="L-77"><a href="#L-77"><span class="linenos">77</span></a>        <span class="n">validate_installed_libraries</span><span class="p">(</span><span class="n">required_libraries</span><span class="p">[</span><span class="s1">&#39;torch_ort&#39;</span><span class="p">])</span>
 </span><span id="L-78"><a href="#L-78"><span class="linenos">78</span></a>
 </span><span id="L-79"><a href="#L-79"><span class="linenos">79</span></a>        <span class="c1"># trigger onnxruntime op registration</span>
 </span><span id="L-80"><a href="#L-80"><span class="linenos">80</span></a>        <span class="kn">from</span> <span class="nn">.object_detection</span> <span class="kn">import</span> <span class="n">nms_ort</span>
@@ -516,7 +516,7 @@ res = multiclass_nms(boxes,
 </span><span id="load_custom_ops-75"><a href="#load_custom_ops-75"><span class="linenos">75</span></a><span class="sd">            ```</span>
 </span><span id="load_custom_ops-76"><a href="#load_custom_ops-76"><span class="linenos">76</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="load_custom_ops-77"><a href="#load_custom_ops-77"><span class="linenos">77</span></a>    <span class="k">if</span> <span class="n">load_ort</span> <span class="ow">or</span> <span class="n">ort_session_ops</span><span class="p">:</span>
-</span><span id="load_custom_ops-78"><a href="#load_custom_ops-78"><span class="linenos">78</span></a>        <span class="n">validate_pip_requirements</span><span class="p">(</span><span class="n">requirements</span><span class="p">[</span><span class="s1">&#39;torch_ort&#39;</span><span class="p">])</span>
+</span><span id="load_custom_ops-78"><a href="#load_custom_ops-78"><span class="linenos">78</span></a>        <span class="n">validate_installed_libraries</span><span class="p">(</span><span class="n">required_libraries</span><span class="p">[</span><span class="s1">&#39;torch_ort&#39;</span><span class="p">])</span>
 </span><span id="load_custom_ops-79"><a href="#load_custom_ops-79"><span class="linenos">79</span></a>
 </span><span id="load_custom_ops-80"><a href="#load_custom_ops-80"><span class="linenos">80</span></a>        <span class="c1"># trigger onnxruntime op registration</span>
 </span><span id="load_custom_ops-81"><a href="#load_custom_ops-81"><span class="linenos">81</span></a>        <span class="kn">from</span> <span class="nn">.object_detection</span> <span class="kn">import</span> <span class="n">nms_ort</span>
