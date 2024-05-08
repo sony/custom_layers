@@ -88,10 +88,10 @@ sony_custom_layers<wbr>.keras    </h1>
 </span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="c1"># limitations under the License.</span>
 </span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="c1"># -----------------------------------------------------------------------------</span>
 </span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="kn">from</span> <span class="nn">sony_custom_layers.util.import_util</span> <span class="kn">import</span> <span class="n">validate_pip_requirements</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="kn">from</span> <span class="nn">sony_custom_layers</span> <span class="kn">import</span> <span class="n">requirements</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="kn">from</span> <span class="nn">sony_custom_layers.util.import_util</span> <span class="kn">import</span> <span class="n">validate_installed_libraries</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="kn">from</span> <span class="nn">sony_custom_layers</span> <span class="kn">import</span> <span class="n">required_libraries</span>
 </span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a>
-</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a><span class="n">validate_pip_requirements</span><span class="p">(</span><span class="n">requirements</span><span class="p">[</span><span class="s1">&#39;tf&#39;</span><span class="p">])</span>
+</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a><span class="n">validate_installed_libraries</span><span class="p">(</span><span class="n">required_libraries</span><span class="p">[</span><span class="s1">&#39;tf&#39;</span><span class="p">])</span>
 </span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a>
 </span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a><span class="kn">from</span> <span class="nn">.object_detection</span> <span class="kn">import</span> <span class="n">FasterRCNNBoxDecode</span><span class="p">,</span> <span class="n">SSDPostProcess</span><span class="p">,</span> <span class="n">ScoreConverter</span>    <span class="c1"># noqa: E402</span>
 </span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a><span class="kn">from</span> <span class="nn">.custom_objects</span> <span class="kn">import</span> <span class="n">custom_layers_scope</span>    <span class="c1"># noqa: E402</span>
