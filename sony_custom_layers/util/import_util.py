@@ -13,38 +13,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+import importlib
+import warnings
 from typing import List, Union
-
 from packaging.requirements import Requirement
 from packaging.version import parse
-from importlib import metadata
 
 
 class RequirementError(Exception):
     pass
 
 
-def validate_pip_requirements(requirements: List[str]):
+def validate_installed_libraries(requirements: List[str]):
     """
-    Validate that all requirements are installed and meet the version specifications.
+    Validate that all required libraries are installed and meet the version specifications.
+    We import the required libraries and obtain the version from __version__, rather than looking at the installed
+    pip package, since a single library can be provided by different pip packages per arch, device, etc.
+    (for example 'import onnxruntime' is provided by both onnxruntime and onnxruntime-gpu packages).
 
     Args:
-        requirements: a list of pip-style requirement strings
+        requirements (list): a list of pip-style-like requirement strings with the package name being the library name
+                             that is used in the import statement.
 
     Raises:
-        RequirementError if any required package is not installed or doesn't meet the version specification
+        RequirementError if any required library is not installed or doesn't meet the version specification
     """
     error = ''
     for req_str in requirements:
         req = Requirement(req_str)
         try:
-            installed_ver = metadata.version(req.name)
-        except metadata.PackageNotFoundError:
-            error += f'\nRequired package {req_str} is not installed'
+            mod = importlib.import_module(req.name)
+        except ImportError:
+            error += f"\nRequired library '{req.name}' is not installed."
             continue
 
-        if parse(installed_ver) not in req.specifier:
-            error += f'\nRequired {req_str}, installed version {installed_ver}'
+        if req.specifier:
+            try:
+                installed_ver = mod.__version__
+            except AttributeError:
+                warnings.warn(f"Failed to retrieve '{req.name}' version. Continuing without compatability check.")
+                continue
+            if parse(installed_ver) not in req.specifier:
+                error += f"\nRequired '{req.name}' version {req.specifier}, installed version {installed_ver}."
+
     if error:
         raise RequirementError(error)
 
@@ -53,14 +64,15 @@ def is_compatible(requirements: Union[str, List]) -> bool:
     """
     Non-raising requirement(s) check
     Args:
-        requirements (str, List): requirement pip-style string or a list of requirement strings
+        requirements (str, List): a pip-style-like requirement string with the package name being the library name that
+                                  is used in the import statement, or a list of such requirement strings.
 
     Returns:
         (bool) whether requirement(s) are satisfied
     """
     requirements = [requirements] if isinstance(requirements, str) else requirements
     try:
-        validate_pip_requirements(requirements)
+        validate_installed_libraries(requirements)
     except RequirementError:
         return False
     return True
