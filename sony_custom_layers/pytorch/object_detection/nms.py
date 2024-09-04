@@ -34,6 +34,7 @@ class NMSResults(NamedTuple):
     boxes: Tensor
     scores: Tensor
     labels: Tensor
+    indices: Tensor
     n_valid: Tensor
 
     def detach(self) -> 'NMSResults':
@@ -69,7 +70,8 @@ def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, 
         - boxes: The selected boxes with shape [batch, max_detections, 4].
         - scores: The corresponding scores in descending order with shape [batch, max_detections].
         - labels: The labels for each box with shape [batch, max_detections].
-        - n_valid: The number of valid detections out of 'max_detections' with shape [batch, 1]
+        - indices: indices of the inputs boxes that have been selected.
+        - n_valid: The number of valid detections out of 'max_detections' with shape [batch, 1].
 
     Raises:
         ValueError: If provided with invalid arguments or input tensors with unexpected or non-matching shapes.
@@ -86,7 +88,7 @@ def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, 
                              score_threshold=0.1,
                              iou_threshold=0.6,
                              max_detections=300)
-        # res.boxes, res.scores, res.labels, res.n_valid
+        # res.boxes, res.scores, res.labels, res.indices, res.n_valid
         ```
     """
     return NMSResults(*torch.ops.sony.multiclass_nms(boxes, scores, score_threshold, iou_threshold, max_detections))
@@ -128,6 +130,7 @@ if is_compatible('torch>=2.2'):
             torch.empty((batch, max_detections, 4)),
             torch.empty((batch, max_detections)),
             torch.empty((batch, max_detections), dtype=torch.int64),
+            torch.empty((batch, max_detections), dtype=torch.int64),
             torch.empty((batch, 1), dtype=torch.int64)
         )    # yapf: disable
 
@@ -157,7 +160,7 @@ def _multiclass_nms_impl(boxes: Union[Tensor, np.ndarray], scores: Union[Tensor,
                          f'and scores ({scores.shape[-2]})')
 
     batch = boxes.shape[0]
-    res = torch.zeros((batch, max_detections, 6), device=boxes.device)
+    res = torch.zeros((batch, max_detections, 7), device=boxes.device)
     valid_dets = torch.zeros((batch, 1), device=boxes.device)
     for i in range(batch):
         res[i], valid_dets[i] = _image_multiclass_nms(boxes[i],
@@ -169,6 +172,7 @@ def _multiclass_nms_impl(boxes: Union[Tensor, np.ndarray], scores: Union[Tensor,
     return NMSResults(boxes=res[..., :4],
                       scores=res[..., 4],
                       labels=res[..., 5].to(torch.int64),
+                      indices=res[..., 6].to(torch.int64),
                       n_valid=valid_dets.to(torch.int64))
 
 
@@ -185,18 +189,21 @@ def _image_multiclass_nms(boxes: Tensor, scores: Tensor, score_threshold: float,
 
     Returns:
         A tensor of shape [max_detections, 6] and the number of valid detections.
-        out[:, :4] contains the selected boxes
-        out[:, 4] and out[:, 5] contain the scores and labels for the selected boxes
+        out[:, :4] contains the selected boxes.
+        out[:, 4] contains the scores for the selected boxes.
+        out[:, 5] contains the labels for the selected boxes.
+        out[:, 6] contains the indices of the input boxes that have been selected.
 
     """
     x = _convert_inputs(boxes, scores, score_threshold)
-    out = torch.zeros(max_detections, 6, device=boxes.device)
+    out = torch.zeros(max_detections, 7, device=boxes.device)
     if x.size(0) == 0:
         return out, 0
-    idxs = _nms_with_class_offsets(x, iou_threshold=iou_threshold)
+    idxs = _nms_with_class_offsets(x[:, :6], iou_threshold=iou_threshold)
     idxs = idxs[:max_detections]
     valid_dets = idxs.numel()
-    out[:valid_dets] = x[idxs]
+    out[:valid_dets, :6] = x[idxs, :6]
+    out[:valid_dets, 6] = x[:, 6][idxs]
     return out, valid_dets
 
 
@@ -209,18 +216,20 @@ def _convert_inputs(boxes: Tensor, scores: Tensor, score_threshold: float) -> Te
         score_threshold: score threshold for nms candidates
 
     Returns:
-        A tensor of shape [m, 6] containing m nms candidates above the score threshold.
+        A tensor of shape [m, 7] containing m nms candidates above the score threshold.
         x[:, :4] contains the boxes with replication for different labels
         x[:, 4] contains the scores
         x[:, 5] contains the labels indices (label i corresponds to input scores[:, i])
+        x[:, 6] contains the corresponding original box index in input 'boxes'
     """
     n_boxes, n_classes = scores.shape
     scores_mask = scores > score_threshold
     box_indices = torch.arange(n_boxes, device=boxes.device).unsqueeze(1).expand(-1, n_classes)[scores_mask]
-    x = torch.empty((box_indices.numel(), 6), device=boxes.device)
+    x = torch.empty((box_indices.numel(), 7), device=boxes.device)
     x[:, :4] = boxes[box_indices]
     x[:, 4] = scores[scores_mask]
     x[:, 5] = torch.arange(n_classes, device=boxes.device).unsqueeze(0).expand(n_boxes, -1)[scores_mask]
+    x[:, 6] = box_indices
     return x
 
 

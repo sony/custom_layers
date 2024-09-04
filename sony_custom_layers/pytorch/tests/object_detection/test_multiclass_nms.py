@@ -55,7 +55,8 @@ class TestMultiClassNMS:
                          [0.16, 0.26, 0.11, 0.46],
                          [0.1, 0.27, 0.37, 0.47]])    # yapf: disable
         x = nms._convert_inputs(boxes, scores, score_threshold=0.11)
-        flat_boxes, flat_scores, labels = x[:, :4], x[:, 4], x[:, 5]
+        assert x.shape == (10, 7)
+        flat_boxes, flat_scores, labels, orig_box_indices = x[:, :4], x[:, 4], x[:, 5], x[:, 6]
         assert flat_boxes.shape == (10, 4)
         assert flat_scores.shape == labels.shape == (10, )
         assert torch.equal(labels, Tensor([0, 1, 2, 3, 0, 1, 3, 1, 2, 3]))
@@ -66,6 +67,7 @@ class TestMultiClassNMS:
         for i in range(7, 10):
             assert torch.equal(flat_boxes[i], boxes[2]), i
         assert torch.equal(flat_scores, Tensor([0.15, 0.25, 0.35, 0.45, 0.16, 0.26, 0.46, 0.27, 0.37, 0.47]))
+        assert torch.equal(orig_box_indices, Tensor([0, 0, 0, 0, 1, 1, 1, 2, 2, 2]))
 
     def test_nms_with_class_offsets(self):
         boxes = Tensor([[0.1, 0.2, 0.3, 0.4],
@@ -111,7 +113,7 @@ class TestMultiClassNMS:
             assert torch.equal(nms_mock.call_args.args[0][:, 5], Tensor([0, 2, 3, 0, 1, 3]))
             assert nms_mock.call_args.kwargs == {'iou_threshold': iou_threshold}
 
-        assert ret.shape == (max_detections, 6)
+        assert ret.shape == (max_detections, 7)
         exp_valid_dets = min(6, max_detections)
         assert torch.equal(ret[:, :4][:exp_valid_dets],
                            Tensor([[0.5, 0.6, 0.7, 0.8],
@@ -125,6 +127,8 @@ class TestMultiClassNMS:
         assert torch.all(ret[:, 4][exp_valid_dets:] == 0)
         assert torch.equal(ret[:, 5][:exp_valid_dets], Tensor([1, 3, 2, 0, 3, 0])[:exp_valid_dets])
         assert torch.all(ret[:, 5][exp_valid_dets:] == 0)
+        assert torch.equal(ret[:, 6][:exp_valid_dets], Tensor([1, 1, 0, 0, 0, 1])[:exp_valid_dets])
+        assert torch.all(ret[:, 6][exp_valid_dets:] == 0)
         assert ret_valid_dets == exp_valid_dets
 
     def test_empty_tensors(self):
@@ -141,8 +145,9 @@ class TestMultiClassNMS:
 
         # these numbers don't really make sense as nms outputs, but we don't really care, we only want to test
         # that outputs are combined correctly
-        img_nms_ret = torch.rand(3, max_dets, 6)
+        img_nms_ret = torch.rand(3, max_dets, 7)
         img_nms_ret[..., 5] = torch.randint(0, 10, (3, max_dets), dtype=torch.float32)
+        img_nms_ret[..., 6] = torch.randint(0, 10, (3, max_dets), dtype=torch.float32)
         ret_valid_dets = Tensor([[5], [4], [3]])
         # each time the function is called, next value in the list returned
         images_ret = [(img_nms_ret[i], ret_valid_dets[i]) for i in range(3)]
@@ -165,6 +170,8 @@ class TestMultiClassNMS:
         assert torch.equal(ret.scores, img_nms_ret[:, :, 4])
         assert torch.equal(ret.labels, img_nms_ret[:, :, 5])
         assert ret.labels.dtype == torch.int64
+        assert torch.equal(ret.indices, img_nms_ret[:, :, 6])
+        assert ret.indices.dtype == torch.int64
         assert torch.equal(ret.n_valid, ret_valid_dets)
         assert ret.n_valid.dtype == torch.int64
 
@@ -182,7 +189,8 @@ class TestMultiClassNMS:
     def test_torch_op_wrapper(self, mocker):
         mock = mocker.patch(
             'sony_custom_layers.pytorch.object_detection.nms._multiclass_nms_impl',
-            Mock(return_value=(torch.rand(3, 5, 4), torch.rand(3, 5), torch.rand(3, 5), torch.rand(3, 1))))
+            Mock(return_value=(torch.rand(3, 5, 4), torch.rand(3, 5), torch.rand(3, 5), torch.rand(3, 5),
+                               torch.rand(3, 1))))
         boxes, scores = self._generate_random_inputs(batch=3, n_boxes=20, n_classes=10)
         ret = nms.multiclass_nms(boxes, scores, score_threshold=0.1, iou_threshold=0.6, max_detections=5)
         assert torch.equal(mock.call_args.args[0], boxes)
@@ -192,7 +200,8 @@ class TestMultiClassNMS:
         assert torch.equal(ret.boxes, mock.return_value[0])
         assert torch.equal(ret.scores, mock.return_value[1])
         assert torch.equal(ret.labels, mock.return_value[2])
-        assert torch.equal(ret.n_valid, mock.return_value[3])
+        assert torch.equal(ret.indices, mock.return_value[3])
+        assert torch.equal(ret.n_valid, mock.return_value[4])
 
     @pytest.mark.parametrize('dynamic_batch', [True, False])
     def test_onnx_export(self, dynamic_batch, tmpdir_factory):
