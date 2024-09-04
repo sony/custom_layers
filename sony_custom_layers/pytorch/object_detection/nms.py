@@ -97,7 +97,7 @@ def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, 
 custom_lib = torch.library.Library(CUSTOM_LIB_NAME, "DEF")
 schema = (MULTICLASS_NMS_TORCH_OP +
           "(Tensor boxes, Tensor scores, float score_threshold, float iou_threshold, SymInt max_detections) "
-          "-> (Tensor, Tensor, Tensor, Tensor)")
+          "-> (Tensor, Tensor, Tensor, Tensor, Tensor)")
 op_name = custom_lib.define(schema)
 
 if is_compatible('torch>=2.2'):
