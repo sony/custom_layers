@@ -38,7 +38,7 @@ def _batch_multiclass_nms(boxes: Union[Tensor, np.ndarray], scores: Union[Tensor
 
     Returns:
         A tuple of two tensors:
-        - results: A tensor of shape [batch, max_detections, 6] containing the results of multiclass nms.
+        - results: A tensor of shape [batch, max_detections, 7] containing the results of multiclass nms.
         - valid_dets: A tensor of shape [batch, 1] containing the number of valid detections.
 
     """
@@ -89,7 +89,7 @@ def _image_multiclass_nms(boxes: Tensor, scores: Tensor, score_threshold: float,
         max_detections: fixed number of detections to return
 
     Returns:
-        A tensor 'out' of shape [max_detections, 6] and the number of valid detections.
+        A tensor 'out' of shape [max_detections, 7] and the number of valid detections.
         out[:, :4] contains the selected boxes.
         out[:, 4] contains the scores for the selected boxes.
         out[:, 5] contains the labels for the selected boxes.
@@ -117,7 +117,7 @@ def _convert_inputs(boxes: Tensor, scores: Tensor, score_threshold: float) -> Te
         score_threshold: score threshold for nms candidates
 
     Returns:
-        A tensor of shape [m, 6] containing m nms candidates above the score threshold.
+        A tensor of shape [m, 7] containing m nms candidates above the score threshold.
         x[:, :4] contains the boxes with replication for different labels
         x[:, 4] contains the scores
         x[:, 5] contains the labels indices (label i corresponds to input scores[:, i])
