@@ -57,6 +57,8 @@ def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, 
     The output tensors always contain a fixed number of detections, as defined by 'max_detections'.
     If fewer detections are selected, the output tensors are zero-padded up to 'max_detections'.
 
+    If you also require the input indices of the selected boxes, see `multiclass_nms_with_indices`.
+
     Args:
         boxes (Tensor): Input boxes with shape [batch, n_boxes, 4], specified in corner coordinates
                         (x_min, y_min, x_max, y_max). Agnostic to the x-y axes order.

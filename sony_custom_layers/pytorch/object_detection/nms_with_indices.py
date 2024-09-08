@@ -58,6 +58,8 @@ def multiclass_nms_with_indices(boxes, scores, score_threshold: float, iou_thres
     The output tensors always contain a fixed number of detections, as defined by 'max_detections'.
     If fewer detections are selected, the output tensors are zero-padded up to 'max_detections'.
 
+    This operator is identical to `multiclass_nms` except that is also outputs the input indices of the selected boxes.
+
     Args:
         boxes (Tensor): Input boxes with shape [batch, n_boxes, 4], specified in corner coordinates
                         (x_min, y_min, x_max, y_max). Agnostic to the x-y axes order.
@@ -85,10 +87,10 @@ def multiclass_nms_with_indices(boxes, scores, score_threshold: float, iou_thres
         boxes = torch.rand(1, 1000, 4)
         scores = torch.rand(1, 1000, 50)
         res = multiclass_nms_with_indices(boxes,
-                             scores,
-                             score_threshold=0.1,
-                             iou_threshold=0.6,
-                             max_detections=300)
+                                          scores,
+                                          score_threshold=0.1,
+                                          iou_threshold=0.6,
+                                          max_detections=300)
         # res.boxes, res.scores, res.labels, res.indices, res.n_valid
         ```
     """
