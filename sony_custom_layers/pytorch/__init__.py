@@ -21,11 +21,12 @@ from sony_custom_layers import required_libraries
 if TYPE_CHECKING:
     import onnxruntime as ort
 
-__all__ = ['multiclass_nms', 'NMSResults', 'load_custom_ops']
+__all__ = ['multiclass_nms', 'NMSResults', 'multiclass_nms_with_indices', 'NMSWithIndicesResults', 'load_custom_ops']
 
 validate_installed_libraries(required_libraries['torch'])
 
 from .object_detection import multiclass_nms, NMSResults    # noqa: E402
+from .object_detection import multiclass_nms_with_indices, NMSWithIndicesResults    # noqa: E402
 
 
 def load_custom_ops(load_ort: bool = False,
