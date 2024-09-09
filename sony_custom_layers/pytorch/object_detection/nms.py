@@ -121,7 +121,7 @@ schema = (MULTICLASS_NMS_TORCH_OP +
 
 op_qualname = register_op(MULTICLASS_NMS_TORCH_OP, schema, _multiclass_nms_impl)
 
-if is_compatible('torch>=2.2'):
+if is_compatible('torch~=2.2'):
 
     @torch.library.impl_abstract(op_qualname)
     def _multiclass_nms_meta(boxes: torch.Tensor, scores: torch.Tensor, score_threshold: float, iou_threshold: float,

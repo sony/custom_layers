@@ -206,7 +206,7 @@ ort_res = session.run(output_names=None, input_feed={{'boxes': boxes, 'scores': 
         """
         exec_in_clean_process(code, check=True)
 
-    @pytest.mark.skipif(not is_compatible('torch>=2.2'), reason='unsupported')
+    @pytest.mark.skipif(not is_compatible('torch~=2.2.0'), reason='unsupported')
     @pytest.mark.parametrize('with_indices', [True, False])
     def test_pt2_export(self, tmpdir_factory, with_indices):
 
