@@ -25,7 +25,6 @@ from sony_custom_layers.pytorch import multiclass_nms, multiclass_nms_with_indic
 from sony_custom_layers.pytorch import load_custom_ops
 from sony_custom_layers.pytorch.object_detection.nms_common import LABELS, INDICES, SCORES
 from sony_custom_layers.pytorch.tests.object_detection.test_nms_common import generate_random_inputs
-from sony_custom_layers.util.import_util import is_compatible
 from sony_custom_layers.util.test_util import exec_in_clean_process
 
 
@@ -187,7 +186,7 @@ class TestMultiClassNMS:
         batch = 5 if dynamic_batch else 1
         boxes, scores = generate_random_inputs(batch=batch, n_boxes=n_boxes, n_classes=n_classes, seed=42)
         torch_res = model(boxes, scores)
-        so = load_custom_ops(load_ort=True)
+        so = load_custom_ops()
         session = ort.InferenceSession(path, sess_options=so)
         ort_res = session.run(output_names=None, input_feed={'boxes': boxes.numpy(), 'scores': scores.numpy()})
         # this is just a sanity test on random data
@@ -198,50 +197,12 @@ class TestMultiClassNMS:
 import onnxruntime as ort
 import numpy as np
 from sony_custom_layers.pytorch import load_custom_ops
-so = load_custom_ops(load_ort=True)
+so = ort.SessionOptions()
+so = load_custom_ops(so)
 session = ort.InferenceSession('{path}', so)
 boxes = np.random.rand({batch}, {n_boxes}, 4).astype(np.float32)
 scores = np.random.rand({batch}, {n_boxes}, {n_classes}).astype(np.float32)
 ort_res = session.run(output_names=None, input_feed={{'boxes': boxes, 'scores': scores}})
-        """
-        exec_in_clean_process(code, check=True)
-
-    @pytest.mark.skipif(not is_compatible('torch>=2.2'), reason='unsupported')
-    @pytest.mark.parametrize('with_indices', [True, False])
-    def test_pt2_export(self, tmpdir_factory, with_indices):
-
-        model = NMS(score_threshold=0.5, iou_threshold=0.3, max_detections=100, with_indices=with_indices)
-        prog = torch.export.export(model, args=(torch.rand(1, 10, 4), torch.rand(1, 10, 5)))
-        nms_node = list(prog.graph.nodes)[2]
-        exp_target = torch.ops.sony.multiclass_nms_with_indices if with_indices else torch.ops.sony.multiclass_nms
-        assert nms_node.target == exp_target.default
-        val = nms_node.meta['val']
-        assert val[0].shape[1:] == (100, 4)
-        assert val[1].shape[1:] == val[2].shape[1:] == (100, )
-        assert val[2].dtype == torch.int64
-        if with_indices:
-            assert val[3].shape[1:] == (100, )
-            assert val[3].dtype == torch.int64
-            assert val[4].shape[1:] == (1, )
-            assert val[4].dtype == torch.int64
-        else:
-            assert val[3].shape[1:] == (1, )
-            assert val[3].dtype == torch.int64
-
-        boxes, scores = generate_random_inputs(1, 10, 5)
-        torch_out = model(boxes, scores)
-        prog_out = prog.module()(boxes, scores)
-        for i in range(len(torch_out)):
-            assert torch.allclose(torch_out[i], prog_out[i]), i
-
-        path = str(tmpdir_factory.mktemp('nms').join(f'nms{with_indices}.pt2'))
-        torch.export.save(prog, path)
-        # check that exported program can be loaded in a clean env
-        code = f"""
-import torch
-import sony_custom_layers.pytorch
-prog = torch.export.load('{path}')
-prog.module()(torch.rand(1, 10, 4), torch.rand(1, 10, 5))
         """
         exec_in_clean_process(code, check=True)
 
