@@ -29,62 +29,38 @@ from .object_detection import multiclass_nms, NMSResults    # noqa: E402
 from .object_detection import multiclass_nms_with_indices, NMSWithIndicesResults    # noqa: E402
 
 
-def load_custom_ops(load_ort: bool = False,
-                    ort_session_ops: Optional['ort.SessionOptions'] = None) -> Optional['ort.SessionOptions']:
+def load_custom_ops(ort_session_ops: Optional['ort.SessionOptions'] = None) -> 'ort.SessionOptions':
     """
-    Note: this must be run before inferring a model with SCL in onnxruntime.
-    To trigger ops registration in torch any import from sony_custom_layers.pytorch is technically sufficient,
-    In which case this is just a dummy API to prevent unused import (e.g. when loading exported pt2 model)
-
-    Load custom ops for torch and, optionally, for onnxruntime.
-    If 'load_ort' is True or 'ort_session_ops' is passed, registers the custom ops implementation for onnxruntime, and
-    sets up the SessionOptions object for onnxruntime session.
+    Registers the custom ops implementation for onnxruntime, and sets up the SessionOptions object for onnxruntime
+    session.
 
     Args:
-        load_ort: whether to register the custom ops for onnxruntime.
-        ort_session_ops: SessionOptions object to register the custom ops library on. If None (and 'load_ort' is True),
-                        creates a new object.
+        ort_session_ops: SessionOptions object to register the custom ops library on. If None, creates a new object.
 
     Returns:
-        SessionOptions object if ort registration was requested, otherwise None
+        SessionOptions object with registered custom ops.
 
     Example:
-        *ONNXRuntime*:
-            ```
-            import onnxruntime as ort
-            from sony_custom_layers.pytorch import load_custom_ops
+        ```
+        import onnxruntime as ort
+        from sony_custom_layers.pytorch import load_custom_ops
 
-            so = load_custom_ops(load_ort=True)
-            session = ort.InferenceSession(model_path, sess_options=so)
-            session.run(...)
-            ```
-            You can also pass your own SessionOptions object upon which to register the custom ops
-            ```
-            load_custom_ops(ort_session_options=so)
-            ```
-
-        *PT2 model*:<br>
-            If sony_custom_layers.pytorch is already imported no action is needed. Otherwise, you can use:
-
-            ```
-            from sony_custom_layers.pytorch import load_custom_ops
-            load_custom_ops()
-
-            prog = torch.export.load(model_path)
-            y = prog.module()(x)
-            ```
+        so = load_custom_ops()
+        session = ort.InferenceSession(model_path, sess_options=so)
+        session.run(...)
+        ```
+        You can also pass your own SessionOptions object upon which to register the custom ops
+        ```
+        load_custom_ops(ort_session_options=so)
+        ```
     """
-    if load_ort or ort_session_ops:
-        validate_installed_libraries(required_libraries['torch_ort'])
+    validate_installed_libraries(required_libraries['torch_ort'])
 
-        # trigger onnxruntime op registration
-        from .object_detection import nms_ort
+    # trigger onnxruntime op registration
+    from .object_detection import nms_ort
 
-        from onnxruntime_extensions import get_library_path
-        from onnxruntime import SessionOptions
-        ort_session_ops = ort_session_ops or SessionOptions()
-        ort_session_ops.register_custom_ops_library(get_library_path())
-        return ort_session_ops
-    else:
-        # nothing really to do after import was triggered
-        return None
+    from onnxruntime_extensions import get_library_path
+    from onnxruntime import SessionOptions
+    ort_session_ops = ort_session_ops or SessionOptions()
+    ort_session_ops.register_custom_ops_library(get_library_path())
+    return ort_session_ops
