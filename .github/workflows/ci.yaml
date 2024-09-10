@@ -182,7 +182,7 @@ jobs:
           if v.is_devrelease:
               print(f'{v.major}.{v.minor}.{v.micro}.dev{v.dev + 1}')
           else:
-              print(f'{v.major}.{v.minor}.{v.micro + 1}.dev0')
+              print(f'{v.major}.{v.minor+1}.{v.micro}.dev0')
           ")
           fi
           echo "new_ver=${new_version}"  >> $GITHUB_ENV
