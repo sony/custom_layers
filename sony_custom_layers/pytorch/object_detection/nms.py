@@ -21,7 +21,6 @@ import torchvision    # noqa: F401 # needed for torch.ops.torchvision
 
 from sony_custom_layers.pytorch.custom_lib import register_op
 from sony_custom_layers.pytorch.object_detection.nms_common import _batch_multiclass_nms, SCORES, LABELS
-from sony_custom_layers.util.import_util import is_compatible
 
 MULTICLASS_NMS_TORCH_OP = 'multiclass_nms'
 
@@ -119,20 +118,4 @@ schema = (MULTICLASS_NMS_TORCH_OP +
           "(Tensor boxes, Tensor scores, float score_threshold, float iou_threshold, SymInt max_detections) "
           "-> (Tensor, Tensor, Tensor, Tensor)")
 
-op_qualname = register_op(MULTICLASS_NMS_TORCH_OP, schema, _multiclass_nms_impl)
-
-if is_compatible('torch~=2.2'):
-
-    @torch.library.impl_abstract(op_qualname)
-    def _multiclass_nms_meta(boxes: torch.Tensor, scores: torch.Tensor, score_threshold: float, iou_threshold: float,
-                             max_detections: int) -> NMSResults:
-        """ Registers torch op's abstract implementation. It specifies the properties of the output tensors.
-            Needed for torch.export """
-        ctx = torch.library.get_ctx()
-        batch = ctx.new_dynamic_size()
-        return NMSResults(
-            torch.empty((batch, max_detections, 4)),
-            torch.empty((batch, max_detections)),
-            torch.empty((batch, max_detections), dtype=torch.int64),
-            torch.empty((batch, 1), dtype=torch.int64)
-        )    # yapf: disable
+register_op(MULTICLASS_NMS_TORCH_OP, schema, _multiclass_nms_impl)

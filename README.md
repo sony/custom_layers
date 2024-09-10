@@ -47,9 +47,9 @@ pip install sony-custom-layers[torch]
 
 #### PyTorch
 
-| **Tested FW versions**                                                                                                   | **Tested Python version** | **Serialization**                                                                                                 |
-|--------------------------------------------------------------------------------------------------------------------------|---------------------------|-------------------------------------------------------------------------------------------------------------------|
-| torch 2.0-2.4<br/>torchvision 0.15-0.19<br/>onnxruntime 1.15-1.19<br/>onnxruntime_extensions 0.8-0.12<br/>onnx 1.14-1.16 | 3.8-3.11                  | .onnx (via torch.onnx.export)<br/>.pt2 (via torch.export.export, torch2.2 only - discontinued for later versions) |
+| **Tested FW versions**                                                                                                   | **Tested Python version** | **Serialization**              |
+|--------------------------------------------------------------------------------------------------------------------------|---------------------------|--------------------------------|
+| torch 2.0-2.4<br/>torchvision 0.15-0.19<br/>onnxruntime 1.15-1.19<br/>onnxruntime_extensions 0.8-0.12<br/>onnx 1.14-1.16 | 3.8-3.11                  | .onnx (via torch.onnx.export)  |
 
 ## API
 For sony-custom-layers API see https://sony.github.io/custom_layers
@@ -66,7 +66,7 @@ For PyTorch layers see
 
 No special handling is required for torch.onnx.export and onnx.load.
 
-For OnnxRuntime / PT2 support see [load_custom_ops](https://sony.github.io/custom_layers/sony_custom_layers/pytorch.html#load_custom_ops) 
+For OnnxRuntime support see [load_custom_ops](https://sony.github.io/custom_layers/sony_custom_layers/pytorch.html#load_custom_ops) 
 
 ## License
 [Apache License 2.0](LICENSE.md).
