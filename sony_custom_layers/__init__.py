@@ -26,6 +26,6 @@ required_libraries = {
 # pinned requirements of latest tested versions for extra_requires
 pinned_pip_requirements = {
     'tf': ['tensorflow==2.15.*'],
-    'torch': ['torch==2.2.*', 'torchvision==0.17.*'],
-    'torch_ort': ['onnx==1.15.*', 'onnxruntime==1.17.*', 'onnxruntime_extensions==0.10.*']
+    'torch': ['torch==2.4.*', 'torchvision==0.19.*'],
+    'torch_ort': ['onnx==1.16.*', 'onnxruntime==1.19.*', 'onnxruntime_extensions==0.12.*']
 }

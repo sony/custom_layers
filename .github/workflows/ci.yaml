@@ -92,34 +92,48 @@ jobs:
       fail-fast: false
       matrix:
         # Test selected versions combinations as following:
-        # * latest/earliest torch+torchvision X latest/earliest ort X latest/earliest ort-ext
+        # * latest/earliest torch+torchvision X latest/earliest ort X latest/earliest ort-ext X latest/earliest onnx
         # * each remaining version is covered by at least one test
         # !!!NOTE!!! if newer versions are added, update sony_custom_layers.__init__ pinned_requirements
         py_ver: [ "3.8", "3.9", "3.10", "3.11" ]
-        torch_ver: ["2.0", "2.1", "2.2"]
-        ort_ver: ["1.15", "1.17"]
-        ort_ext_ver: ["0.8", "0.10"]
+        torch_ver: ["2.0", "2.1", "2.2", "2.3", "2.4"]
+        ort_ver: ["1.15", "1.19"]
+        ort_ext_ver: ["0.8", "0.12"]
+        onnx_ver: ["1.14", "1.16"]
         exclude:
           - py_ver: "3.11"    # incompatible versions
             ort_ext_ver: "0.8"    
         include:
           # torchvision ver is coupled to a specific torch ver
+          - torch_ver: "2.4"
+            torchvision_ver: "0.19"
+          - torch_ver: "2.3"
+            torchvision_ver: "0.18"
           - torch_ver: "2.2"
             torchvision_ver: "0.17"
-            onnx_ver: "1.14"
           - torch_ver: "2.1"
             torchvision_ver: "0.16"
-            onnx_ver: "1.15"
           - torch_ver: "2.0"
             torchvision_ver: "0.15"
-            onnx_ver: "1.15"
-          # non-covered versions (ort, ort-ext)
+          # non-covered versions (ort, ort-ext, onnx)
           - py_ver: "3.11"
-            torch_ver: "2.1"
-            torchvision_ver: "0.16"
+            torch_ver: "2.4"
+            torchvision_ver: "0.19"
             ort_ver: "1.16"
             ort_ext_ver: "0.9"
+            onnx_ver: "1.15"
+          - py_ver: "3.11"
+            torch_ver: "2.3"
+            torchvision_ver: "0.15"
+            ort_ver: "1.17"
+            ort_ext_ver: "0.10"
             onnx_ver: "1.14"
+          - py_ver: "3.11"
+            torch_ver: "2.2"
+            torchvision_ver: "0.17"
+            ort_ver: "1.18"
+            ort_ext_ver: "0.11"
+            onnx_ver: "1.16"
 
     steps:
       - name: Checkout
@@ -168,7 +182,7 @@ jobs:
           if v.is_devrelease:
               print(f'{v.major}.{v.minor}.{v.micro}.dev{v.dev + 1}')
           else:
-              print(f'{v.major}.{v.minor}.{v.micro + 1}.dev0')
+              print(f'{v.major}.{v.minor+1}.{v.micro}.dev0')
           ")
           fi
           echo "new_ver=${new_version}"  >> $GITHUB_ENV
