@@ -161,6 +161,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Install Python 3
         uses: actions/setup-python@v5
         with:
@@ -170,21 +172,16 @@ jobs:
         run : |
           pip install packaging
           git fetch --tags
-          latest_tag=$(git tag -l | sort -V -r | head -n 1)
-          
-          if [ -z "$latest_tag" ]; then
-            new_version=0.0.0.dev0
-          else
-            latest_tag_without_v=${latest_tag#v}
-            new_version=$(python -c "
+          latest_tag=$(git describe --tags --abbrev=0)          
+          latest_tag_without_v=${latest_tag#v}
+          new_version=$(python -c "
           from packaging.version import parse
           v = parse('$latest_tag_without_v')
           if v.is_devrelease:
               print(f'{v.major}.{v.minor}.{v.micro}.dev{v.dev + 1}')
           else:
-              print(f'{v.major}.{v.minor+1}.{v.micro}.dev0')
+              print(f'{v.major}.{v.minor+1}.0.dev0')
           ")
-          fi
           echo "new_ver=${new_version}"  >> $GITHUB_ENV
           echo "new_tag=v${new_version}" >> $GITHUB_ENV
           echo "cat GITHUB_ENV"
