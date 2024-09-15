@@ -13,16 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+import onnx
 
-from .nms import multiclass_nms, NMSResults
-from .nms_with_indices import multiclass_nms_with_indices, NMSWithIndicesResults
 
-# trigger onnx op registration
-from . import nms_onnx
+def load_and_validate_onnx_model(path, exp_opset):
+    onnx_model = onnx.load(path)
+    onnx.checker.check_model(onnx_model, full_check=True)
+    opset_info = list(onnx_model.opset_import)[1]
+    assert opset_info.domain == 'Sony' and opset_info.version == exp_opset
+    return onnx_model
 
-__all__ = [
-    'multiclass_nms',
-    'multiclass_nms_with_indices',
-    'NMSResults',
-    'NMSWithIndicesResults',
-]
+
+def check_tensor(onnx_tensor, exp_shape, exp_type, dynamic_batch: bool):
+    tensor_type = onnx_tensor.type.tensor_type
+    shape = [d.dim_value if d.dim_value else d.dim_param for d in tensor_type.shape.dim]
+    exp_shape = ['batch' if dynamic_batch else 1] + exp_shape
+    assert shape == exp_shape
+    assert tensor_type.elem_type == exp_type

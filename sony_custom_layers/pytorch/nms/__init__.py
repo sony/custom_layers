@@ -13,3 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
+from .nms import multiclass_nms, NMSResults
+from .nms_with_indices import multiclass_nms_with_indices, NMSWithIndicesResults
+
+# trigger onnx op registration
+from . import nms_onnx
+
+__all__ = [
+    'multiclass_nms',
+    'multiclass_nms_with_indices',
+    'NMSResults',
+    'NMSWithIndicesResults',
+]

@@ -15,9 +15,9 @@
 # -----------------------------------------------------------------------------
 import torch
 
+from sony_custom_layers.pytorch.custom_lib import get_op_qualname
 from .nms import MULTICLASS_NMS_TORCH_OP
 from .nms_with_indices import MULTICLASS_NMS_WITH_INDICES_TORCH_OP
-from ..custom_lib import get_op_qualname
 
 MULTICLASS_NMS_ONNX_OP = "Sony::MultiClassNMS"
 MULTICLASS_NMS_WITH_INDICES_ONNX_OP = "Sony::MultiClassNMSWithIndices"
