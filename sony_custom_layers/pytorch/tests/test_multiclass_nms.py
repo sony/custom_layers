@@ -115,6 +115,14 @@ class TestMultiClassNMS:
             assert ret.n_valid.dtype == torch.int64
 
     @pytest.mark.parametrize('op', [multiclass_nms, multiclass_nms_with_indices])
+    @pytest.mark.parametrize('cuda', [True, False])
+    def test_full_op_sanity(self, op, cuda):
+        if cuda and not torch.cuda.is_available():
+            pytest.skip('cuda is not available')
+        boxes, scores = generate_random_inputs(batch=3, n_boxes=20, n_classes=10)
+        op(boxes, scores, score_threshold=0.1, iou_threshold=0.6, max_detections=5)
+
+    @pytest.mark.parametrize('op', [multiclass_nms, multiclass_nms_with_indices])
     def test_empty_tensors(self, op):
         # empty inputs
         ret = op(torch.rand(1, 0, 4), torch.rand(1, 0, 10), 0.55, 0.6, 50)
