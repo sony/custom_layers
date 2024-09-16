@@ -21,12 +21,15 @@ from sony_custom_layers import required_libraries
 if TYPE_CHECKING:
     import onnxruntime as ort
 
-__all__ = ['multiclass_nms', 'NMSResults', 'multiclass_nms_with_indices', 'NMSWithIndicesResults', 'load_custom_ops']
+__all__ = [
+    'multiclass_nms', 'NMSResults', 'multiclass_nms_with_indices', 'NMSWithIndicesResults', 'FasterRCNNBoxDecode',
+    'load_custom_ops'
+]
 
 validate_installed_libraries(required_libraries['torch'])
-
-from .object_detection import multiclass_nms, NMSResults    # noqa: E402
-from .object_detection import multiclass_nms_with_indices, NMSWithIndicesResults    # noqa: E402
+from sony_custom_layers.pytorch.nms import (    # noqa: E402
+    multiclass_nms, NMSResults, multiclass_nms_with_indices, NMSWithIndicesResults)
+from sony_custom_layers.pytorch.box_decode import FasterRCNNBoxDecode    # noqa: E402
 
 
 def load_custom_ops(ort_session_ops: Optional['ort.SessionOptions'] = None) -> 'ort.SessionOptions':
@@ -57,7 +60,8 @@ def load_custom_ops(ort_session_ops: Optional['ort.SessionOptions'] = None) -> '
     validate_installed_libraries(required_libraries['torch_ort'])
 
     # trigger onnxruntime op registration
-    from .object_detection import nms_ort
+    from .nms import nms_ort
+    from .box_decode import box_decode_ort
 
     from onnxruntime_extensions import get_library_path
     from onnxruntime import SessionOptions

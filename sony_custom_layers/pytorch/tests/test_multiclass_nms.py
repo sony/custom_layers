@@ -18,13 +18,13 @@ from unittest.mock import Mock
 import pytest
 import numpy as np
 import torch
-import onnx
 import onnxruntime as ort
 
 from sony_custom_layers.pytorch import multiclass_nms, multiclass_nms_with_indices, NMSResults, NMSWithIndicesResults
 from sony_custom_layers.pytorch import load_custom_ops
-from sony_custom_layers.pytorch.object_detection.nms_common import LABELS, INDICES, SCORES
-from sony_custom_layers.pytorch.tests.object_detection.test_nms_common import generate_random_inputs
+from sony_custom_layers.pytorch.nms.nms_common import LABELS, INDICES, SCORES
+from sony_custom_layers.pytorch.tests.test_nms_common import generate_random_inputs
+from sony_custom_layers.pytorch.tests.util import load_and_validate_onnx_model, check_tensor
 from sony_custom_layers.util.test_util import exec_in_clean_process
 
 
@@ -58,7 +58,7 @@ class TestMultiClassNMS:
     @pytest.mark.parametrize('op, patch_pkg', [(torch.ops.sony.multiclass_nms, 'nms'),
                                                (torch.ops.sony.multiclass_nms_with_indices, 'nms_with_indices')])
     def test_torch_op(self, mocker, op, patch_pkg):
-        mock = mocker.patch(f'sony_custom_layers.pytorch.object_detection.{patch_pkg}._batch_multiclass_nms',
+        mock = mocker.patch(f'sony_custom_layers.pytorch.nms.{patch_pkg}._batch_multiclass_nms',
                             self._batch_multiclass_nms_mock(batch=3, n_dets=5))
         boxes, scores = generate_random_inputs(batch=3, n_boxes=10, n_classes=5)
         ret = op(boxes, scores, score_threshold=0.1, iou_threshold=0.6, max_detections=5)
@@ -89,7 +89,7 @@ class TestMultiClassNMS:
                               (multiclass_nms_with_indices, NMSWithIndicesResults,
                                torch.ops.sony.multiclass_nms_with_indices, 'nms_with_indices')])
     def test_torch_op_wrapper(self, mocker, op, res_cls, torch_op, patch_pkg):
-        mock = mocker.patch(f'sony_custom_layers.pytorch.object_detection.{patch_pkg}._batch_multiclass_nms',
+        mock = mocker.patch(f'sony_custom_layers.pytorch.nms.{patch_pkg}._batch_multiclass_nms',
                             self._batch_multiclass_nms_mock(batch=3, n_dets=5))
         boxes, scores = generate_random_inputs(batch=3, n_boxes=20, n_classes=10)
         ret = op(boxes, scores, score_threshold=0.1, iou_threshold=0.6, max_detections=5)
@@ -115,6 +115,14 @@ class TestMultiClassNMS:
             assert ret.n_valid.dtype == torch.int64
 
     @pytest.mark.parametrize('op', [multiclass_nms, multiclass_nms_with_indices])
+    @pytest.mark.parametrize('cuda', [True, False])
+    def test_full_op_sanity(self, op, cuda):
+        if cuda and not torch.cuda.is_available():
+            pytest.skip('cuda is not available')
+        boxes, scores = generate_random_inputs(batch=3, n_boxes=20, n_classes=10)
+        op(boxes, scores, score_threshold=0.1, iou_threshold=0.6, max_detections=5)
+
+    @pytest.mark.parametrize('op', [multiclass_nms, multiclass_nms_with_indices])
     def test_empty_tensors(self, op):
         # empty inputs
         ret = op(torch.rand(1, 0, 4), torch.rand(1, 0, 10), 0.55, 0.6, 50)
@@ -137,10 +145,7 @@ class TestMultiClassNMS:
         path = str(tmpdir_factory.mktemp('nms').join(f'nms{with_indices}.onnx'))
         self._export_onnx(onnx_model, n_boxes, n_classes, path, dynamic_batch=dynamic_batch, with_indices=with_indices)
 
-        onnx_model = onnx.load(path)
-        onnx.checker.check_model(onnx_model, full_check=True)
-        opset_info = list(onnx_model.opset_import)[1]
-        assert opset_info.domain == 'Sony' and opset_info.version == 1
+        onnx_model = load_and_validate_onnx_model(path, exp_opset=1)
 
         nms_node = list(onnx_model.graph.node)[0]
         assert nms_node.domain == 'Sony'
@@ -155,24 +160,17 @@ class TestMultiClassNMS:
         assert len(nms_node.input) == 2
         assert len(nms_node.output) == 4 + int(with_indices)
 
-        def check_tensor(onnx_tensor, exp_shape, exp_type):
-            tensor_type = onnx_tensor.type.tensor_type
-            shape = [d.dim_value if d.dim_value else d.dim_param for d in tensor_type.shape.dim]
-            exp_shape = ['batch' if dynamic_batch else 1] + exp_shape
-            assert shape == exp_shape
-            assert tensor_type.elem_type == exp_type
-
-        check_tensor(onnx_model.graph.input[0], [10, 4], torch.onnx.TensorProtoDataType.FLOAT)
-        check_tensor(onnx_model.graph.input[1], [10, 5], torch.onnx.TensorProtoDataType.FLOAT)
+        check_tensor(onnx_model.graph.input[0], [10, 4], torch.onnx.TensorProtoDataType.FLOAT, dynamic_batch)
+        check_tensor(onnx_model.graph.input[1], [10, 5], torch.onnx.TensorProtoDataType.FLOAT, dynamic_batch)
         # test shape inference that is defined as part of onnx op
-        check_tensor(onnx_model.graph.output[0], [max_dets, 4], torch.onnx.TensorProtoDataType.FLOAT)
-        check_tensor(onnx_model.graph.output[1], [max_dets], torch.onnx.TensorProtoDataType.FLOAT)
-        check_tensor(onnx_model.graph.output[2], [max_dets], torch.onnx.TensorProtoDataType.INT32)
+        check_tensor(onnx_model.graph.output[0], [max_dets, 4], torch.onnx.TensorProtoDataType.FLOAT, dynamic_batch)
+        check_tensor(onnx_model.graph.output[1], [max_dets], torch.onnx.TensorProtoDataType.FLOAT, dynamic_batch)
+        check_tensor(onnx_model.graph.output[2], [max_dets], torch.onnx.TensorProtoDataType.INT32, dynamic_batch)
         if with_indices:
-            check_tensor(onnx_model.graph.output[3], [max_dets], torch.onnx.TensorProtoDataType.INT32)
-            check_tensor(onnx_model.graph.output[4], [1], torch.onnx.TensorProtoDataType.INT32)
+            check_tensor(onnx_model.graph.output[3], [max_dets], torch.onnx.TensorProtoDataType.INT32, dynamic_batch)
+            check_tensor(onnx_model.graph.output[4], [1], torch.onnx.TensorProtoDataType.INT32, dynamic_batch)
         else:
-            check_tensor(onnx_model.graph.output[3], [1], torch.onnx.TensorProtoDataType.INT32)
+            check_tensor(onnx_model.graph.output[3], [1], torch.onnx.TensorProtoDataType.INT32, dynamic_batch)
 
     @pytest.mark.parametrize('dynamic_batch', [True, False])
     @pytest.mark.parametrize('with_indices', [True, False])
