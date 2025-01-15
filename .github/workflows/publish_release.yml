@@ -5,13 +5,12 @@ on:
       version:
         type: string
         required: true
-        description: "Version to build (1.2.3)"
+        description: "Release version (e.g. 1.2.3). Corresponding tag (v1.2.3) should already exist."
       to_testpypi:
         type: boolean
         required: true
         default: true
-        description: "use testpypi and not push tag"
-
+        description: "Publish to testpypi."
 
 
 jobs:
@@ -19,10 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref:  v${{ inputs.version }}
       - name: Install Python 3
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Validate version
         shell: bash
@@ -34,26 +35,11 @@ jobs:
               exit(1)
           END
 
-      - name: Validate tags
-        shell: bash
-        run: |
-          new_tag=v${{ inputs.version }}
-          echo new_tag: $new_tag
-          
-          git pull --tags
-          # if tag exists, returns 0 (and ret doesn't get defined)
-          git rev-parse $new_tag >& /dev/null|| ret=$?
-          if [[ -z $ret ]]; then
-            echo "Error: Git tag $new_tag already exists!"
-            exit 1
-          fi
-          echo "new_tag=${new_tag}" >> $GITHUB_ENV
-
       - name: update version
         shell: bash
         run: |
           echo "__version__ = '${{ inputs.version }}'" >  sony_custom_layers/version.py
-          echo "print sony_custom_layers/version.py"
+          echo "sony_custom_layers/version.py content:"
           cat sony_custom_layers/version.py
 
       - name: Build wheel
@@ -67,13 +53,9 @@ jobs:
         shell: bash
         run: |
           twine upload --repository pypi dist/* -u __token__ -p ${{ secrets.PYPI_API_KEY }}
-          git tag ${{ env.new_tag }}
-          git push origin ${{ env.new_tag }}
 
       - name: Publish package testpypi
         if: inputs.to_testpypi == true
         shell: bash
         run: |
           twine upload --repository testpypi dist/* -u __token__ -p ${{ secrets.TEST_PYPI_API_KEY }}
-          
-
