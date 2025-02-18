@@ -3,7 +3,7 @@ name: Run CI Tests
 on:
   push:
     branches:
-      - tutorial_update
+      - main
   pull_request:
     branches:
       - main
@@ -75,7 +75,11 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          pip install tensorflow==${{matrix.tf_ver}}.* numpy<2 -r requirements_test.txt
+          if [ ${{matrix.tf_ver}} == 2.10 ] || [ ${{matrix.tf_ver}} == 2.11 ];then
+            extra_req='numpy<2'
+          fi
+          pip install tensorflow==${{matrix.tf_ver}}.* $extra_req
+          pip install -r requirements_test.txt
           pip list
       - name: Run pytest
         run: |
@@ -140,12 +144,12 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          pip install torch==${{matrix.torch_ver}}.* \
-                      torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu
+          extra_req='numpy<2'
+          pip install torch==${{matrix.torch_ver}}.* $extra_req \
+                      torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
           pip install onnxruntime==${{matrix.ort_ver}}.* \
                       onnxruntime_extensions==${{matrix.ort_ext_ver}}.* \
                       onnx==${{matrix.onnx_ver}}.* \
-                      numpy<2 \ 
                       -r ./requirements_test.txt
           pip check
           pip list
