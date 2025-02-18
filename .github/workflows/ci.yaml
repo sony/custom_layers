@@ -75,7 +75,7 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          pip install tensorflow==${{matrix.tf_ver}}.* 'numpy<2' -r requirements_test.txt
+          pip install tensorflow==${{matrix.tf_ver}}.* numpy<2 -r requirements_test.txt
           pip list
       - name: Run pytest
         run: |
@@ -145,7 +145,7 @@ jobs:
           pip install onnxruntime==${{matrix.ort_ver}}.* \
                       onnxruntime_extensions==${{matrix.ort_ext_ver}}.* \
                       onnx==${{matrix.onnx_ver}}.* \
-                      'numpy<2' \ 
+                      numpy<2 \ 
                       -r ./requirements_test.txt
           pip check
           pip list
