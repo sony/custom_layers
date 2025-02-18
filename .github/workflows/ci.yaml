@@ -3,7 +3,7 @@ name: Run CI Tests
 on:
   push:
     branches:
-      - main
+      - tutorial_update
   pull_request:
     branches:
       - main
@@ -142,6 +142,7 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
+          extra_req='numpy<2'
           pip install torch==${{matrix.torch_ver}}.* \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
           pip install onnxruntime==${{matrix.ort_ver}}.* \
