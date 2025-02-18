@@ -75,9 +75,7 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          extra_req='numpy<2'
-          pip install tensorflow==${{matrix.tf_ver}}.* $extra_req
-          pip install -r requirements_test.txt
+          pip install tensorflow==${{matrix.tf_ver}}.* 'numpy<2' -r requirements_test.txt
           pip list
       - name: Run pytest
         run: |
@@ -142,12 +140,12 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          extra_req='numpy<2'
           pip install torch==${{matrix.torch_ver}}.* \
-                      torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
+                      torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu
           pip install onnxruntime==${{matrix.ort_ver}}.* \
                       onnxruntime_extensions==${{matrix.ort_ext_ver}}.* \
                       onnx==${{matrix.onnx_ver}}.* \
+                      'numpy<2' \ 
                       -r ./requirements_test.txt
           pip check
           pip list
