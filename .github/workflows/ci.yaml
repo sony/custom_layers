@@ -75,9 +75,7 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          if [ ${{matrix.tf_ver}} == 2.10 ] || [ ${{matrix.tf_ver}} == 2.11 ];then
-            extra_req='numpy<2'
-          fi
+          extra_req='numpy<2'
           pip install tensorflow==${{matrix.tf_ver}}.* $extra_req
           pip install -r requirements_test.txt
           pip list
