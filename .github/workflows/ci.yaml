@@ -75,7 +75,7 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-           # Extra requirement numpy<2 is aligned with the package dependencies
+          # Extra requirement numpy<2 is aligned with the package dependencies
           extra_req='numpy<2'
           pip install tensorflow==${{matrix.tf_ver}}.* $extra_req
           pip install -r requirements_test.txt
@@ -144,7 +144,7 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-           # Extra requirement numpy<2 is aligned with the package dependencies
+          # Extra requirement numpy<2 is aligned with the package dependencies
           extra_req='numpy<2'
           pip install torch==${{matrix.torch_ver}}.* $extra_req \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
