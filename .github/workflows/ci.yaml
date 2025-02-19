@@ -73,9 +73,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{matrix.py_ver}}
-      - name: Install dependencies
+      - name: Install dependencies # Extra requirement numpy<2 is aligned with the package dependencies
         run: |
-          # Extra requirement numpy<2 is aligned with the package dependencies
           pip install tensorflow==${{matrix.tf_ver}}.* numpy<2
           pip install -r requirements_test.txt
           pip check
@@ -141,9 +140,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{matrix.py_ver}}
-      - name: Install dependencies
+      - name: Install dependencies # Extra requirement numpy<2 is aligned with the package dependencies
         run: |
-          # Extra requirement numpy<2 is aligned with the package dependencies
           pip install torch==${{matrix.torch_ver}}.* \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu \
                       numpy<2
