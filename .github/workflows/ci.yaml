@@ -98,7 +98,7 @@ jobs:
         torch_ver: ["2.0", "2.1", "2.2", "2.3", "2.4"]
         ort_ver: ["1.15", "1.19"]
         ort_ext_ver: ["0.8", "0.12"]
-        onnx_ver: ["1.14", "1.16"]
+        onnx_ver: ["1.14", "1.17"]
         exclude:
           - py_ver: "3.11"    # incompatible versions
             ort_ext_ver: "0.8"    
