@@ -143,7 +143,7 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          if [ ${{matrix.torch_ver}} < 2.2 ] || [ ${{matrix.ort_ver}} < 1.19 ];then
+          if awk 'BEGIN {exit !('"${{ matrix.torch_ver }}"' < 2.2 || '"${{ matrix.ort_ver }}"' < 1.19)}'; then
             extra_req='numpy<2'
           fi
           pip install torch==${{matrix.torch_ver}}.* $extra_req \
