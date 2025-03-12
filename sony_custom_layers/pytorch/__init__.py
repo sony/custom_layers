@@ -23,14 +23,14 @@ if TYPE_CHECKING:
 
 __all__ = [
     'multiclass_nms', 'NMSResults', 'multiclass_nms_with_indices', 'NMSWithIndicesResults', 'FasterRCNNBoxDecode',
-    'load_custom_ops'
+    'load_custom_ops', 'MulticlassNMS', 'CustomLayer'
 ]
 
 validate_installed_libraries(required_libraries['torch'])
 from sony_custom_layers.pytorch.nms import (    # noqa: E402
-    multiclass_nms, NMSResults, multiclass_nms_with_indices, NMSWithIndicesResults)
+    multiclass_nms, NMSResults, multiclass_nms_with_indices, NMSWithIndicesResults, NMSResults, MulticlassNMS)
 from sony_custom_layers.pytorch.box_decode import FasterRCNNBoxDecode    # noqa: E402
-
+from sony_custom_layers.pytorch.custom_layer import CustomLayer
 
 def load_custom_ops(ort_session_ops: Optional['ort.SessionOptions'] = None) -> 'ort.SessionOptions':
     """

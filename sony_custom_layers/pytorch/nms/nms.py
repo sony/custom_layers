@@ -21,10 +21,11 @@ import torchvision    # noqa: F401 # needed for torch.ops.torchvision
 
 from sony_custom_layers.pytorch.custom_lib import register_op
 from .nms_common import _batch_multiclass_nms, SCORES, LABELS
+from sony_custom_layers.pytorch.custom_layer import CustomLayer
 
 MULTICLASS_NMS_TORCH_OP = 'multiclass_nms'
 
-__all__ = ['multiclass_nms', 'NMSResults']
+__all__ = ['multiclass_nms', 'NMSResults', 'MulticlassNMS']
 
 
 class NMSResults(NamedTuple):
@@ -94,6 +95,19 @@ def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, 
     return NMSResults(*torch.ops.sony.multiclass_nms(boxes, scores, score_threshold, iou_threshold, max_detections))
 
 
+class MulticlassNMS(CustomLayer):
+    def __init__(self, score_threshold: float, iou_threshold: float, max_detections: int):
+        super(MulticlassNMS, self).__init__()
+        self.score_threshold = score_threshold
+        self.iou_threshold = iou_threshold
+        self.max_detections = max_detections
+
+    def forward(self, data):
+        boxes, scores = data[0], data[1]
+        nms = multiclass_nms(boxes=boxes, scores=scores, score_threshold=self.score_threshold,
+                             iou_threshold=self.iou_threshold, max_detections=self.max_detections)
+        return nms
+
 ######################
 # Register custom op #
 ######################
@@ -119,3 +133,4 @@ schema = (MULTICLASS_NMS_TORCH_OP +
           "-> (Tensor, Tensor, Tensor, Tensor)")
 
 register_op(MULTICLASS_NMS_TORCH_OP, schema, _multiclass_nms_impl)
+# register_op('MulticlassNMS', schema, _multiclass_nms_impl)
