@@ -20,8 +20,9 @@ from torch import Tensor
 
 from sony_custom_layers.pytorch.custom_lib import register_op
 from .nms_common import _batch_multiclass_nms, SCORES, LABELS, INDICES
+from sony_custom_layers.pytorch import CustomLayer
 
-__all__ = ['multiclass_nms_with_indices', 'NMSWithIndicesResults']
+__all__ = ['multiclass_nms_with_indices', 'NMSWithIndicesResults', 'MulticlassNMSWithIndices']
 
 MULTICLASS_NMS_WITH_INDICES_TORCH_OP = 'multiclass_nms_with_indices'
 
@@ -96,6 +97,19 @@ def multiclass_nms_with_indices(boxes, scores, score_threshold: float, iou_thres
     return NMSWithIndicesResults(
         *torch.ops.sony.multiclass_nms_with_indices(boxes, scores, score_threshold, iou_threshold, max_detections))
 
+
+class MulticlassNMSWithIndices(CustomLayer):
+    def __init__(self, score_threshold: float, iou_threshold: float, max_detections: int):
+        super(MulticlassNMSWithIndices, self).__init__()
+        self.score_threshold = score_threshold
+        self.iou_threshold = iou_threshold
+        self.max_detections = max_detections
+
+    def forward(self, data):
+        boxes, scores = data[0], data[1]
+        nms = multiclass_nms_with_indices(boxes=boxes, scores=scores, score_threshold=self.score_threshold,
+                                          iou_threshold=self.iou_threshold, max_detections=self.max_detections)
+        return nms
 
 ######################
 # Register custom op #

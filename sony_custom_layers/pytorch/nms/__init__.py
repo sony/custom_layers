@@ -14,7 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 from .nms import multiclass_nms, NMSResults, MulticlassNMS
-from .nms_with_indices import multiclass_nms_with_indices, NMSWithIndicesResults
+from .nms_with_indices import multiclass_nms_with_indices, NMSWithIndicesResults, MulticlassNMSWithIndices
 
 # trigger onnx op registration
 from . import nms_onnx
@@ -24,5 +24,6 @@ __all__ = [
     'multiclass_nms_with_indices',
     'NMSResults',
     'NMSWithIndicesResults',
-    'MulticlassNMS'
+    'MulticlassNMS',
+    'MulticlassNMSWithIndices'
 ]
