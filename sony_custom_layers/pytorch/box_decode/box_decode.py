@@ -16,9 +16,9 @@
 from typing import Union, Sequence
 
 import torch
-from torch import nn
 
 from sony_custom_layers.common.box_util import corners_to_centroids, centroids_to_corners
+from sony_custom_layers.pytorch import CustomLayer
 from sony_custom_layers.pytorch.custom_lib import register_op
 
 BOX_DECODE_TORCH_OP = 'faster_rcnn_box_decode'
@@ -26,7 +26,7 @@ BOX_DECODE_TORCH_OP = 'faster_rcnn_box_decode'
 __all__ = ['FasterRCNNBoxDecode']
 
 
-class FasterRCNNBoxDecode(nn.Module):
+class FasterRCNNBoxDecode(CustomLayer):
     """
     Box decoding as per Faster R-CNN <https://arxiv.org/abs/1506.01497>.
 
@@ -61,15 +61,15 @@ class FasterRCNNBoxDecode(nn.Module):
         super().__init__()
         if not (len(anchors.shape) == 2 and anchors.shape[-1] == 4):
             raise ValueError(f'Invalid anchors shape {anchors.shape}. Expected shape (n_boxes, 4).')
-        self.register_buffer('anchors', anchors)
+        self.anchors = anchors
 
         if len(scale_factors) != 4:
             raise ValueError(f'Invalid scale factors {scale_factors}. Expected 4 values for (y, x, height, width).')
-        self.register_buffer('scale_factors', torch.tensor(scale_factors, dtype=torch.float32, device=anchors.device))
+        self.scale_factors = scale_factors
 
         if len(clip_window) != 4:
             raise ValueError(f'Invalid clip window {clip_window}. Expected 4 values for (y_min, x_min, y_max, x_max).')
-        self.register_buffer('clip_window', torch.tensor(clip_window, dtype=torch.float32, device=anchors.device))
+        self.clip_window = clip_window
 
     def forward(self, rel_codes: torch.Tensor) -> torch.Tensor:
         return torch.ops.sony.faster_rcnn_box_decode(rel_codes, self.anchors, self.scale_factors, self.clip_window)
@@ -90,7 +90,11 @@ def _faster_rcnn_box_decode_impl(rel_codes: torch.Tensor, anchors: torch.Tensor,
         raise ValueError(f'Mismatch in the number of boxes between input tensor ({rel_codes.shape[-2]}) '
                          f'and anchors ({anchors.shape[-2]})')
 
-    scaled_codes = rel_codes / scale_factors
+    if rel_codes.device != anchors.device:
+        raise RuntimeError(f"Expected all tensors to be on the same device, but found at least two devices, "
+                           f"{rel_codes.device} and {anchors.device}!")
+
+    scaled_codes = rel_codes / torch.tensor(scale_factors, device=rel_codes.device)
 
     a_y_min, a_x_min, a_y_max, a_x_max = torch.unbind(anchors, dim=-1)
     a_y_center, a_x_center, a_h, a_w = corners_to_centroids(a_y_min, a_x_min, a_y_max, a_x_max)
@@ -109,6 +113,6 @@ def _faster_rcnn_box_decode_impl(rel_codes: torch.Tensor, anchors: torch.Tensor,
 
 
 schema = (BOX_DECODE_TORCH_OP +
-          "(Tensor rel_codes, Tensor anchors, Tensor scale_factors, Tensor clip_window) -> Tensor")
+          "(Tensor rel_codes, Tensor anchors, float[] scale_factors, float[] clip_window) -> Tensor")
 
 register_op(BOX_DECODE_TORCH_OP, schema, _faster_rcnn_box_decode_impl)
