@@ -103,18 +103,10 @@ jobs:
           - py_ver: "3.11"    # incompatible versions
             ort_ext_ver: "0.8"
         include:
-          - py_ver: "3.11"
-            torch_ver: "2.6"
+          - torch_ver: "2.6"
             torchvision_ver: "0.21"
-            ort_ver: "1.21"
-            ort_ext_ver: "0.13"
-            onnx_ver: "1.17"
-          - py_ver: "3.10"
-            torch_ver: "2.5"
-            torchvision_ver: "0.21"
-            ort_ver: "1.21"
-            ort_ext_ver: "0.13"
-            onnx_ver: "1.17"
+          - torch_ver: "2.5"
+            torchvision_ver: "0.20"
 
     steps:
       - name: Checkout
