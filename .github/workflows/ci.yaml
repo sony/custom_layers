@@ -99,6 +99,7 @@ jobs:
         ort_ver: ["1.21"]
         ort_ext_ver: ["0.13"]
         onnx_ver: ["1.17"]
+        torchvision_ver: ["0.21.0"]
 
     steps:
       - name: Checkout
@@ -109,8 +110,8 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          if [ ${{matrix.torch_ver}} == 2.10 ] || [ ${{matrix.tf_ver}} == 2.11 ];then
-            extra_req='numpy<2'
+          if [ ${{matrix.torch_ver}} == 2.10 ] ;then
+            extra_req='numpy>2'
           fi
           pip install torch==${{matrix.torch_ver}}.* \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
