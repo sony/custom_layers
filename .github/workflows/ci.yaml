@@ -146,7 +146,6 @@ jobs:
           if awk 'BEGIN {exit !('"${{ matrix.torch_ver }}"' < 2.2 || '"${{ matrix.onnx_ver }}"' < 1.17 || '"${{ matrix.ort_ver }}"' < 1.19 || '"${{ matrix.ort_ext_ver }}"' < 0.12)}'; then
             extra_req='numpy<2'
           fi
-          extra_req=''
           pip install torch==${{matrix.torch_ver}}.* $extra_req \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
           pip install onnxruntime==${{matrix.ort_ver}}.* \
