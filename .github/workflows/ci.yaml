@@ -94,12 +94,27 @@ jobs:
         # * latest/earliest torch+torchvision X latest/earliest ort X latest/earliest ort-ext X latest/earliest onnx
         # * each remaining version is covered by at least one test
         # !!!NOTE!!! if newer versions are added, update sony_custom_layers.__init__ pinned_requirements
-        py_ver: [ "3.10, 3.11" ]
-        torch_ver: ["2.5, 2.6"]
+        py_ver: ["3.10", "3.11" ]
+        torch_ver: ["2.5", "2.6"]
         ort_ver: ["1.21"]
         ort_ext_ver: ["0.13"]
         onnx_ver: ["1.17"]
-        torchvision_ver: ["0.21.0"]
+        exclude:
+          - py_ver: "3.11"    # incompatible versions
+            ort_ext_ver: "0.8"
+        include:
+          - py_ver: "3.11"
+            torch_ver: "2.6"
+            torchvision_ver: "0.21"
+            ort_ver: "1.21"
+            ort_ext_ver: "0.13"
+            onnx_ver: "1.17"
+          - py_ver: "3.10"
+            torch_ver: "2.5"
+            torchvision_ver: "0.21"
+            ort_ver: "1.21"
+            ort_ext_ver: "0.13"
+            onnx_ver: "1.17"
 
     steps:
       - name: Checkout
@@ -108,12 +123,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{matrix.py_ver}}
-      - name: Install dependencies
+      - name: Install dependencies # Extra requirement numpy<2 is aligned with the package dependencies
         run: |
-          if [ ${{matrix.torch_ver}} == 2.10 ] ;then
-            extra_req='numpy>2'
-          fi
-          pip install torch==${{matrix.torch_ver}}.* \
+          extra_req='numpy>2'
+          pip install torch==${{matrix.torch_ver}}.* $extra_req \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
           pip install onnxruntime==${{matrix.ort_ver}}.* \
                       onnxruntime_extensions==${{matrix.ort_ext_ver}}.* \
