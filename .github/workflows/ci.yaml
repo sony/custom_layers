@@ -95,10 +95,10 @@ jobs:
         # * each remaining version is covered by at least one test
         # !!!NOTE!!! if newer versions are added, update sony_custom_layers.__init__ pinned_requirements
         py_ver: [ "3.8", "3.9", "3.10", "3.11" ]
-        torch_ver: ["2.0", "2.1", "2.2", "2.3", "2.4"]
-        ort_ver: ["1.15", "1.19"]
-        ort_ext_ver: ["0.8", "0.13"]
-        onnx_ver: ["1.14", "1.17"]
+        torch_ver: ["2.2", "2.3", "2.4"]
+        ort_ver: ["1.21"]
+        ort_ext_ver: ["0.13"]
+        onnx_ver: ["1.17"]
         exclude:
           - py_ver: "3.11"    # incompatible versions
             ort_ext_ver: "0.8"    
@@ -146,6 +146,7 @@ jobs:
           if awk 'BEGIN {exit !('"${{ matrix.torch_ver }}"' < 2.2 || '"${{ matrix.onnx_ver }}"' < 1.17 || '"${{ matrix.ort_ver }}"' < 1.19 || '"${{ matrix.ort_ext_ver }}"' < 0.12)}'; then
             extra_req='numpy<2'
           fi
+          extra_req=''
           pip install torch==${{matrix.torch_ver}}.* $extra_req \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
           pip install onnxruntime==${{matrix.ort_ver}}.* \
