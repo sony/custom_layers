@@ -99,40 +99,6 @@ jobs:
         ort_ver: ["1.21"]
         ort_ext_ver: ["0.13"]
         onnx_ver: ["1.17"]
-        exclude:
-          - py_ver: "3.11"    # incompatible versions
-            ort_ext_ver: "0.8"    
-        include:
-          # torchvision ver is coupled to a specific torch ver
-          - torch_ver: "2.4"
-            torchvision_ver: "0.19"
-          - torch_ver: "2.3"
-            torchvision_ver: "0.18"
-          - torch_ver: "2.2"
-            torchvision_ver: "0.17"
-          - torch_ver: "2.1"
-            torchvision_ver: "0.16"
-          - torch_ver: "2.0"
-            torchvision_ver: "0.15"
-          # non-covered versions (ort, ort-ext, onnx)
-          - py_ver: "3.11"
-            torch_ver: "2.4"
-            torchvision_ver: "0.19"
-            ort_ver: "1.16"
-            ort_ext_ver: "0.9"
-            onnx_ver: "1.15"
-          - py_ver: "3.11"
-            torch_ver: "2.3"
-            torchvision_ver: "0.18"
-            ort_ver: "1.17"
-            ort_ext_ver: "0.10"
-            onnx_ver: "1.14"
-          - py_ver: "3.11"
-            torch_ver: "2.2"
-            torchvision_ver: "0.17"
-            ort_ver: "1.18"
-            ort_ext_ver: "0.11"
-            onnx_ver: "1.16"
 
     steps:
       - name: Checkout
@@ -143,10 +109,10 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies
         run: |
-          if awk 'BEGIN {exit !('"${{ matrix.torch_ver }}"' < 2.2 || '"${{ matrix.onnx_ver }}"' < 1.17 || '"${{ matrix.ort_ver }}"' < 1.19 || '"${{ matrix.ort_ext_ver }}"' < 0.12)}'; then
+          if [ ${{matrix.torch_ver}} == 2.10 ] || [ ${{matrix.tf_ver}} == 2.11 ];then
             extra_req='numpy<2'
           fi
-          pip install torch==${{matrix.torch_ver}}.* $extra_req \
+          pip install torch==${{matrix.torch_ver}}.* \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
           pip install onnxruntime==${{matrix.ort_ver}}.* \
                       onnxruntime_extensions==${{matrix.ort_ext_ver}}.* \
