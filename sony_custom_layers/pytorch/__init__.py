@@ -33,6 +33,7 @@ from sony_custom_layers.pytorch.nms import (    # noqa: E402
     MulticlassNMS, MulticlassNMSWithIndices)
 from sony_custom_layers.pytorch.box_decode import FasterRCNNBoxDecode    # noqa: E402
 
+
 def load_custom_ops(ort_session_ops: Optional['ort.SessionOptions'] = None) -> 'ort.SessionOptions':
     """
     Registers the custom ops implementation for onnxruntime, and sets up the SessionOptions object for onnxruntime

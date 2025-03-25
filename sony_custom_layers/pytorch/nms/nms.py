@@ -133,4 +133,3 @@ schema = (MULTICLASS_NMS_TORCH_OP +
           "-> (Tensor, Tensor, Tensor, Tensor)")
 
 register_op(MULTICLASS_NMS_TORCH_OP, schema, _multiclass_nms_impl)
-# register_op('MulticlassNMS', schema, _multiclass_nms_impl)
