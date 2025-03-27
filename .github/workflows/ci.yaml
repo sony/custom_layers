@@ -102,6 +102,10 @@ jobs:
         exclude:
           - py_ver: "3.11"    # incompatible versions
             ort_ext_ver: "0.8"
+          - py_ver: "3.8"    # incompatible versions
+            ort_ver: "1.21"
+          - py_ver: "3.9"    # incompatible versions
+            ort_ver: "1.21"
         include:
           # torchvision ver is coupled to a specific torch ver
           - torch_ver: "2.4"
@@ -143,7 +147,7 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies # Extra requirement numpy<2 is aligned with the package dependencies
         run: |
-          if awk 'BEGIN {exit !('"${{ matrix.torch_ver }}"' < 2.3 || '"${{ matrix.onnx_ver }}"' < 1.17 || '"${{ matrix.ort_ver }}"' < 1.19 || '"${{ matrix.ort_ext_ver }}"' < 0.12)}'; then
+          if awk 'BEGIN {exit !('"${{ matrix.torch_ver }}"' < 2.3 || '"${{ matrix.onnx_ver }}"' < 1.17 || '"${{ matrix.ort_ver }}"' < 1.19 || '"${{ matrix.ort_ext_ver }}"' == 0.8)}'; then
             extra_req='numpy<2'
           fi
           python -m pip install --upgrade pi
