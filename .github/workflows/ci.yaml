@@ -94,19 +94,45 @@ jobs:
         # * latest/earliest torch+torchvision X latest/earliest ort X latest/earliest ort-ext X latest/earliest onnx
         # * each remaining version is covered by at least one test
         # !!!NOTE!!! if newer versions are added, update sony_custom_layers.__init__ pinned_requirements
-        py_ver: ["3.10", "3.11" ]
-        torch_ver: ["2.5", "2.6"]
-        ort_ver: ["1.21"]
-        ort_ext_ver: ["0.13"]
-        onnx_ver: ["1.17"]
+        py_ver: [ "3.8", "3.9", "3.10", "3.11" ]
+        torch_ver: ["2.1", "2.2", "2.3", "2.4", "2.5"]
+        ort_ver: ["1.15", "1.21"]
+        ort_ext_ver: ["0.8", "0.13"]
+        onnx_ver: ["1.14", "1.17"]
         exclude:
           - py_ver: "3.11"    # incompatible versions
             ort_ext_ver: "0.8"
         include:
-          - torch_ver: "2.6"
-            torchvision_ver: "0.21"
+          # torchvision ver is coupled to a specific torch ver
+          - torch_ver: "2.4"
+            torchvision_ver: "0.19"
+          - torch_ver: "2.3"
+            torchvision_ver: "0.18"
+          - torch_ver: "2.2"
+            torchvision_ver: "0.17"
+          - torch_ver: "2.1"
+            torchvision_ver: "0.16"
           - torch_ver: "2.5"
             torchvision_ver: "0.20"
+          # non-covered versions (ort, ort-ext, onnx)
+          - py_ver: "3.11"
+            torch_ver: "2.4"
+            torchvision_ver: "0.19"
+            ort_ver: "1.16"
+            ort_ext_ver: "0.9"
+            onnx_ver: "1.15"
+          - py_ver: "3.11"
+            torch_ver: "2.3"
+            torchvision_ver: "0.18"
+            ort_ver: "1.17"
+            ort_ext_ver: "0.10"
+            onnx_ver: "1.14"
+          - py_ver: "3.11"
+            torch_ver: "2.2"
+            torchvision_ver: "0.17"
+            ort_ver: "1.18"
+            ort_ext_ver: "0.11"
+            onnx_ver: "1.16"
 
     steps:
       - name: Checkout
@@ -117,9 +143,12 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies # Extra requirement numpy<2 is aligned with the package dependencies
         run: |
-          extra_req='numpy==2.2.*'
-          python -m pip install --upgrade pip
-          pip install torch==${{matrix.torch_ver}}.* $extra_req \
+          if awk 'BEGIN {exit !('"${{ matrix.torch_ver }}"' < 2.3 || '"${{ matrix.onnx_ver }}"' < 1.17 || '"${{ matrix.ort_ver }}"' < 1.19 || '"${{ matrix.ort_ext_ver }}"' < 0.12)}'; then
+            extra_req='numpy<2'
+          fi
+          python -m pip install --upgrade pi
+          pip install numpy $extra_req
+          pip install torch==${{matrix.torch_ver}}.* \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
           pip install onnxruntime==${{matrix.ort_ver}}.* \
                       onnxruntime_extensions==${{matrix.ort_ext_ver}}.* \
