@@ -152,10 +152,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{matrix.py_ver}}
-      - name: Install dependencies # Extra requirement numpy<2 is aligned with the package dependencies
+      - name: Install dependencies # Extra requirement numpy<2 for older torch and onnx versions
         run: |
-          if awk 'BEGIN {exit !('"${{ matrix.torch_ver }}"' < 2.3 || '"${{ matrix.onnx_ver }}"' == 1.14 || '"${{ matrix.ort_ver }}"' == 1.15 || '"${{ matrix.ort_ext_ver }}"' == 0.8)}'; then
-            np_req='numpy<2'
+          if [ ${{matrix.torch_ver}} == 2.1 ] || [ ${{matrix.torch_ver}} == 2.2 ];then
+             extra_req='numpy<2'
+          fi
+          if [ ${{matrix.onnx_ver}} == 1.14 ] || [ ${{matrix.ort_ver}} == 1.15 ] || [ ${{matrix.ort_ver}} == 0.8 ];then
+             extra_req='numpy<2'
           fi
           python -m pip install --upgrade pi
           pip install numpy $extra_req
