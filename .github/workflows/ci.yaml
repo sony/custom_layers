@@ -118,6 +118,7 @@ jobs:
       - name: Install dependencies # Extra requirement numpy<2 is aligned with the package dependencies
         run: |
           extra_req='numpy>2'
+          python -m pip install --upgrade pip
           pip install numpy torch==${{matrix.torch_ver}}.* $extra_req \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
           pip install onnxruntime==${{matrix.ort_ver}}.* \
