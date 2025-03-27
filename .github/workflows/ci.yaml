@@ -106,8 +106,17 @@ jobs:
             ort_ver: "1.21"
           - py_ver: "3.9"    # incompatible versions
             ort_ver: "1.21"
+          # torch 2.5 requires numpy>2 while the older onnx versions require numpy<2
+          - torch_ver: "2.5"
+            ort_ver: "1.15"
+          - torch_ver: "2.5"
+            ort_ext_ver: "0.8"
+          - torch_ver: "2.5"
+            onnx_ver: "1.14"
         include:
           # torchvision ver is coupled to a specific torch ver
+          - torch_ver: "2.5"
+            torchvision_ver: "0.20"
           - torch_ver: "2.4"
             torchvision_ver: "0.19"
           - torch_ver: "2.3"
@@ -116,8 +125,6 @@ jobs:
             torchvision_ver: "0.17"
           - torch_ver: "2.1"
             torchvision_ver: "0.16"
-          - torch_ver: "2.5"
-            torchvision_ver: "0.20"
           # non-covered versions (ort, ort-ext, onnx)
           - py_ver: "3.11"
             torch_ver: "2.4"
@@ -147,8 +154,8 @@ jobs:
           python-version: ${{matrix.py_ver}}
       - name: Install dependencies # Extra requirement numpy<2 is aligned with the package dependencies
         run: |
-          if awk 'BEGIN {exit !('"${{ matrix.torch_ver }}"' < 2.3 || '"${{ matrix.onnx_ver }}"' < 1.17 || '"${{ matrix.ort_ver }}"' < 1.19 || '"${{ matrix.ort_ext_ver }}"' == 0.8)}'; then
-            extra_req='numpy<2'
+          if awk 'BEGIN {exit !('"${{ matrix.torch_ver }}"' < 2.3 || '"${{ matrix.onnx_ver }}"' == 1.14 || '"${{ matrix.ort_ver }}"' == 1.15 || '"${{ matrix.ort_ext_ver }}"' == 0.8)}'; then
+            np_req='numpy<2'
           fi
           python -m pip install --upgrade pi
           pip install numpy $extra_req
