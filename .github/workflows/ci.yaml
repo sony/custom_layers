@@ -157,7 +157,7 @@ jobs:
           if [ ${{matrix.torch_ver}} == 2.1 ] || [ ${{matrix.torch_ver}} == 2.2 ];then
              extra_req='numpy<2'
           fi
-          if [ ${{matrix.onnx_ver}} == 1.14 ] || [ ${{matrix.ort_ver}} == 1.15 ] || [ ${{matrix.ort_ext_ver}} == 0.8 || [ ${{matrix.ort_ext_ver}} == 0.9];then
+          if [ ${{matrix.onnx_ver}} == 1.14 ] || [ ${{matrix.ort_ver}} == 1.15 ] || [ ${{matrix.ort_ext_ver}} == 0.8 ] || [ ${{matrix.ort_ext_ver}} == 0.9];then
              extra_req='numpy<2'
           fi
           python -m pip install --upgrade pi
