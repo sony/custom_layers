@@ -160,7 +160,7 @@ jobs:
           if [ ${{matrix.onnx_ver}} == 1.14 ] || [ ${{matrix.ort_ver}} == 1.15 ] || [ ${{matrix.ort_ext_ver}} == 0.8 ] || [ ${{matrix.ort_ext_ver}} == 0.9 ];then
              extra_req='numpy<2'
           fi
-          python -m pip install --upgrade pi
+          python -m pip install --upgrade pip
           pip install numpy $extra_req
           pip install torch==${{matrix.torch_ver}}.* \
                       torchvision==${{matrix.torchvision_ver}}.* --index-url https://download.pytorch.org/whl/cpu 
