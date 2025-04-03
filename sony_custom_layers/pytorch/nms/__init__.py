@@ -20,10 +20,6 @@ from .nms_with_indices import multiclass_nms_with_indices, NMSWithIndicesResults
 from . import nms_onnx
 
 __all__ = [
-    'multiclass_nms',
-    'multiclass_nms_with_indices',
-    'NMSResults',
-    'NMSWithIndicesResults',
-    'MulticlassNMS',
+    'multiclass_nms', 'multiclass_nms_with_indices', 'NMSResults', 'NMSWithIndicesResults', 'MulticlassNMS',
     'MulticlassNMSWithIndices'
 ]

@@ -29,8 +29,8 @@ __all__ = [
 
 validate_installed_libraries(required_libraries['torch'])
 from sony_custom_layers.pytorch.nms import (    # noqa: E402
-    multiclass_nms, NMSResults, multiclass_nms_with_indices, NMSWithIndicesResults,
-    MulticlassNMS, MulticlassNMSWithIndices)
+    multiclass_nms, NMSResults, multiclass_nms_with_indices, NMSWithIndicesResults, MulticlassNMS,
+    MulticlassNMSWithIndices)
 from sony_custom_layers.pytorch.box_decode import FasterRCNNBoxDecode    # noqa: E402
 
 

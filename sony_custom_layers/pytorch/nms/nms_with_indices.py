@@ -111,6 +111,7 @@ class MulticlassNMSWithIndices(CustomLayer):
                                        max_detections=300)
         res = nms(boxes, scores)
     """
+
     def __init__(self, score_threshold: float, iou_threshold: float, max_detections: int):
         """
         Args:
@@ -137,9 +138,13 @@ class MulticlassNMSWithIndices(CustomLayer):
             - indices: Indices of the input boxes that have been selected.
             - n_valid: The number of valid detections out of 'max_detections' with shape [batch, 1]
         """
-        nms = multiclass_nms_with_indices(boxes=boxes, scores=scores, score_threshold=self.score_threshold,
-                                          iou_threshold=self.iou_threshold, max_detections=self.max_detections)
+        nms = multiclass_nms_with_indices(boxes=boxes,
+                                          scores=scores,
+                                          score_threshold=self.score_threshold,
+                                          iou_threshold=self.iou_threshold,
+                                          max_detections=self.max_detections)
         return nms
+
 
 ######################
 # Register custom op #
