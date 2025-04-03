@@ -20,29 +20,13 @@ import numpy as np
 import torch
 import onnxruntime as ort
 
-from sony_custom_layers.pytorch import multiclass_nms, multiclass_nms_with_indices, NMSResults, NMSWithIndicesResults
+from sony_custom_layers.pytorch import (multiclass_nms, multiclass_nms_with_indices, NMSResults, NMSWithIndicesResults,
+                                        MulticlassNMS, MulticlassNMSWithIndices)
 from sony_custom_layers.pytorch import load_custom_ops
 from sony_custom_layers.pytorch.nms.nms_common import LABELS, INDICES, SCORES
 from sony_custom_layers.pytorch.tests.test_nms_common import generate_random_inputs
 from sony_custom_layers.pytorch.tests.util import load_and_validate_onnx_model, check_tensor
 from sony_custom_layers.util.test_util import exec_in_clean_process
-
-
-class NMS(torch.nn.Module):
-
-    def __init__(self, score_threshold, iou_threshold, max_detections, with_indices: bool):
-        super().__init__()
-        self.score_threshold = score_threshold
-        self.iou_threshold = iou_threshold
-        self.max_detections = max_detections
-        self.op = multiclass_nms_with_indices if with_indices else multiclass_nms
-
-    def forward(self, boxes, scores):
-        return self.op(boxes,
-                       scores,
-                       score_threshold=self.score_threshold,
-                       iou_threshold=self.iou_threshold,
-                       max_detections=self.max_detections)
 
 
 class TestMultiClassNMS:
@@ -140,7 +124,8 @@ class TestMultiClassNMS:
         n_classes = 5
         max_dets = 7
 
-        onnx_model = NMS(score_thresh, iou_thresh, max_dets, with_indices=with_indices)
+        nms_class = MulticlassNMSWithIndices if with_indices else MulticlassNMS
+        onnx_model = nms_class(score_thresh, iou_thresh, max_dets)
 
         path = str(tmpdir_factory.mktemp('nms').join(f'nms{with_indices}.onnx'))
         self._export_onnx(onnx_model, n_boxes, n_classes, path, dynamic_batch=dynamic_batch, with_indices=with_indices)
@@ -175,7 +160,8 @@ class TestMultiClassNMS:
     @pytest.mark.parametrize('dynamic_batch', [True, False])
     @pytest.mark.parametrize('with_indices', [True, False])
     def test_ort(self, dynamic_batch, tmpdir_factory, with_indices):
-        model = NMS(0.5, 0.3, 1000, with_indices=with_indices)
+        nms_class = MulticlassNMSWithIndices if with_indices else MulticlassNMS
+        model = nms_class(score_threshold=0.5, iou_threshold=0.3, max_detections=1000)
         n_boxes = 500
         n_classes = 20
         path = str(tmpdir_factory.mktemp('nms').join(f'nms{with_indices}.onnx'))
