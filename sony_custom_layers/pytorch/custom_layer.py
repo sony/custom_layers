@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2025 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from .nms import multiclass_nms, NMSResults, MulticlassNMS
-from .nms_with_indices import multiclass_nms_with_indices, NMSWithIndicesResults, MulticlassNMSWithIndices
 
-# trigger onnx op registration
-from . import nms_onnx
+from abc import ABC
+import torch
 
-__all__ = [
-    'multiclass_nms', 'multiclass_nms_with_indices', 'NMSResults', 'NMSWithIndicesResults', 'MulticlassNMS',
-    'MulticlassNMSWithIndices'
-]
+
+class CustomLayer(torch.nn.Module, ABC):
+    pass
