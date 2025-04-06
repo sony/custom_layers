@@ -8,9 +8,6 @@ repos:
     rev: 'v1.3.0'
     hooks:
     -   id: mypy
-        name: mypy py3.8
-        args: ['--python-version=3.8']
-    -   id: mypy
         name: mypy py3.9
         args: ['--python-version=3.9']
     -   id: mypy
@@ -19,6 +16,10 @@ repos:
     -   id: mypy
         name: mypy py3.11
         args: ['--python-version=3.11']
+    -   id: mypy
+        name: mypy py3.12
+        args: ['--python-version=3.12']
+
 
 -   repo: https://github.com/pycqa/flake8
     rev: 5.0.4

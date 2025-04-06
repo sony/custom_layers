@@ -55,17 +55,14 @@ jobs:
       fail-fast: false
       matrix:
         # NOTE if newer versions are added, update sony_custom_layers.__init__ pinned_requirements!!!
-        py_ver: ["3.8", "3.9", "3.10", "3.11"]
+        py_ver: ["3.9", "3.10", "3.11"]
         tf_ver: ["2.10", "2.11", "2.12", "2.13", "2.14", "2.15"]
         exclude:
           - py_ver: "3.11"
             tf_ver: "2.10"
           - py_ver: "3.11"
             tf_ver: "2.11"
-          - py_ver: "3.8"
-            tf_ver: "2.14"
-          - py_ver: "3.8"
-            tf_ver: "2.15"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -94,16 +91,20 @@ jobs:
         # * latest/earliest torch+torchvision X latest/earliest ort X latest/earliest ort-ext X latest/earliest onnx
         # * each remaining version is covered by at least one test
         # !!!NOTE!!! if newer versions are added, update sony_custom_layers.__init__ pinned_requirements
-        py_ver: [ "3.8", "3.9", "3.10", "3.11" ]
-        torch_ver: ["2.1", "2.2", "2.3", "2.4", "2.5"]
+        py_ver: ["3.9", "3.10", "3.11", "3.12" ]
+        torch_ver: ["2.1", "2.2", "2.3", "2.4", "2.5", "2.6"]
         ort_ver: ["1.15", "1.21"]
         ort_ext_ver: ["0.8", "0.13"]
         onnx_ver: ["1.14", "1.17"]
         exclude:
+          - py_ver: "3.12"    # incompatible versions
+            ort_ver: "1.15"
+          - py_ver: "3.12"    # incompatible versions
+            onnx_ver: "1.14"
+          - py_ver: "3.12"    # incompatible versions
+            ort_ext_ver: "0.8"
           - py_ver: "3.11"    # incompatible versions
             ort_ext_ver: "0.8"
-          - py_ver: "3.8"    # incompatible versions
-            ort_ver: "1.21"
           - py_ver: "3.9"    # incompatible versions
             ort_ver: "1.21"
           # torch 2.5 requires numpy>2 while the older onnx versions require numpy<2
@@ -113,8 +114,13 @@ jobs:
             ort_ext_ver: "0.8"
           - torch_ver: "2.5"
             onnx_ver: "1.14"
+          # not support python 3.12
+          - py_ver: "3.12"
+            torch_ver: "2.1"
         include:
           # torchvision ver is coupled to a specific torch ver
+          - torch_ver: "2.6"
+            torchvision_ver: "0.21"
           - torch_ver: "2.5"
             torchvision_ver: "0.20"
           - torch_ver: "2.4"
