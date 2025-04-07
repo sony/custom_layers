@@ -14,6 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 from typing import Union, Sequence
+import warnings
 
 import torch
 from torch import nn
@@ -59,6 +60,8 @@ class FasterRCNNBoxDecode(nn.Module):
     def __init__(self, anchors: torch.Tensor, scale_factors: Sequence[Union[float, int]],
                  clip_window: Sequence[Union[float, int]]):
         super().__init__()
+        warnings.warn("FasterRCNNBoxDecode is deprecated and will be removed in a future version.", DeprecationWarning)
+
         if not (len(anchors.shape) == 2 and anchors.shape[-1] == 4):
             raise ValueError(f'Invalid anchors shape {anchors.shape}. Expected shape (n_boxes, 4).')
         self.register_buffer('anchors', anchors)
