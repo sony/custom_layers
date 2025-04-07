@@ -21,10 +21,11 @@ import torchvision    # noqa: F401 # needed for torch.ops.torchvision
 
 from sony_custom_layers.pytorch.custom_lib import register_op
 from .nms_common import _batch_multiclass_nms, SCORES, LABELS
+from sony_custom_layers.pytorch.custom_layer import CustomLayer
 
 MULTICLASS_NMS_TORCH_OP = 'multiclass_nms'
 
-__all__ = ['multiclass_nms', 'NMSResults']
+__all__ = ['multiclass_nms', 'NMSResults', 'MulticlassNMS']
 
 
 class NMSResults(NamedTuple):
@@ -92,6 +93,53 @@ def multiclass_nms(boxes, scores, score_threshold: float, iou_threshold: float, 
         ```
     """
     return NMSResults(*torch.ops.sony.multiclass_nms(boxes, scores, score_threshold, iou_threshold, max_detections))
+
+
+class MulticlassNMS(CustomLayer):
+    """
+    A torch.nn.Module for multiclass NMS. See multiclass_nms for additional information.
+
+    Usage example:
+        batch size=1, 1000 boxes, 50 classes
+        boxes = torch.rand(1, 1000, 4)
+        scores = torch.rand(1, 1000, 50)
+        nms = MulticlassNMS(score_threshold=0.1,
+                            iou_threshold=0.6
+                            max_detections=300)
+        res = nms(boxes, scores)
+    """
+
+    def __init__(self, score_threshold: float, iou_threshold: float, max_detections: int):
+        """
+        Args:
+            score_threshold (float): The score threshold. Candidates with scores below the threshold are discarded.
+            iou_threshold (float): The Intersection Over Union (IOU) threshold for boxes overlap.
+            max_detections (int): The number of detections to return.
+        """
+        super(MulticlassNMS, self).__init__()
+        self.score_threshold = score_threshold
+        self.iou_threshold = iou_threshold
+        self.max_detections = max_detections
+
+    def forward(self, boxes: torch.Tensor, scores: torch.Tensor):
+        """
+        Args:
+            boxes (Tensor): Input boxes with shape [batch, n_boxes, 4], specified in corner coordinates
+                            (x_min, y_min, x_max, y_max). Agnostic to the x-y axes order.
+            scores (Tensor): Input scores with shape [batch, n_boxes, n_classes].
+
+        Returns: 'NMSResults' named tuple:
+            - boxes: The selected boxes with shape [batch, max_detections, 4].
+            - scores: The corresponding scores in descending order with shape [batch, max_detections].
+            - labels: The labels for each box with shape [batch, max_detections].
+            - n_valid: The number of valid detections out of 'max_detections' with shape [batch, 1]
+        """
+        nms = multiclass_nms(boxes=boxes,
+                             scores=scores,
+                             score_threshold=self.score_threshold,
+                             iou_threshold=self.iou_threshold,
+                             max_detections=self.max_detections)
+        return nms
 
 
 ######################
