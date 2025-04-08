@@ -55,9 +55,11 @@ jobs:
       fail-fast: false
       matrix:
         # NOTE if newer versions are added, update sony_custom_layers.__init__ pinned_requirements!!!
-        py_ver: ["3.8", "3.9", "3.10", "3.11"]
+        py_ver: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         tf_ver: ["2.10", "2.11", "2.12", "2.13", "2.14", "2.15"]
         exclude:
+          - py_ver: "3.11"
+            tf_ver: "2.10"
           - py_ver: "3.11"
             tf_ver: "2.10"
           - py_ver: "3.11"
